@@ -29,10 +29,13 @@ public with sharing class MockTests {
 		'BillingStreet' => 'other'
 	};
 	class TestMockData extends MockDataStandard {
-		public override Map<String, Map<String, Object>> getValueMap() {
+		/**
+		 * return specific field values for account
+		 */
+		public override Map<String, Object> getValueMap(final String objApiName, final Map<String, Object> fieldValues) {
 			final Map<String, Map<String, Object>> DEFAULT_VALUES_BY_TYPE = new Map<String, Map<String, Object>>();
 			DEFAULT_VALUES_BY_TYPE.put('Account', ACCOUNT_VALUES);
-			return DEFAULT_VALUES_BY_TYPE;
+			return DEFAULT_VALUES_BY_TYPE.get(objApiName);
 		}
 	}
 	/**
@@ -45,7 +48,7 @@ public with sharing class MockTests {
 		//we did not override Site, so it should be the same as default
 		System.assertEquals(obj.Site, MockDataStandard.ACCOUNT_VALUES.get('Site'), 'Should have preserved standard Site value');
 		//
-		System.assertEquals(obj.Name, MockDataStandard.ACCOUNT_VALUES.get('Name'), 'Failed to override field Name');
+		System.assertNotEquals(obj.Name, MockDataStandard.ACCOUNT_VALUES.get('Name'), 'Failed to override field Name');
 		System.assertEquals(obj.get('BillingStreet'), ACCOUNT_VALUES.get('BillingStreet'), 'BillingStreet field from custom dataset not found');
 		
 		//test another signature of Mock.one();

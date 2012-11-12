@@ -77,39 +77,34 @@ public with sharing abstract class MockDataStandard {
 
 	}
 
-	private Map<String, Map<String, Object>> valuesByType;
-	/**
-	 * get custom value map of derivative class and apply it on top of default map
-	 */
-	private Map<String, Map<String, Object>> extendValueMap() {
-		Map<String, Map<String, Object>> valueMap = DEFAULT_VALUES_BY_TYPE.clone();
-		Map<String, Map<String, Object>> overrideValuesMap = getValueMap();
-		for (String objName : overrideValuesMap.keySet()) {
-			Map<String, Object> allValues = valueMap.get(objName);
-			Map<String, Object> newValues = overrideValuesMap.get(objName);
-			if (null != allValues) {
-				allValues.putAll(newValues);
-			} else {
-				allValues = newValues.clone();
-			}
-			valueMap.put(objName, allValues);
-		}
-		//System.assert(false,'valueMap=' + valueMap);
-		
-		return valueMap;
-	}
-
 	/**
 	 * override this method to add custom Org specific value map
+	 * @param: objApiName - api name of salesforce object, e.g. Opportunity
+	 * @fieldValues: map in values provided by user, can be empty but never null
+	 * you may want to use values provided by user to do some data specific intitlaisations
+	 * e.g. return different data sets depending on RecordTypeId
 	 */
-	public abstract Map<String, Map<String, Object>> getValueMap();
+	public abstract Map<String, Object> getValueMap(final String objApiName, final Map<String, Object> fieldValues);
 
 
-	public Map<String, Object> getDefaultValues(final String objApiName) {
-		if (null == valuesByType) {
-			valuesByType = extendValueMap();
+	/**
+	 * @param: objApiName - api name of salesforce object, e.g. Opportunity
+	 * @fieldValues: map in values provided by user, can be empty but never null
+	 */
+	public Map<String, Object> getDefaultValues(final String objApiName, final Map<String, Object> fieldValues) {
+		Map<String, Object> valueMap = DEFAULT_VALUES_BY_TYPE.get(objApiName);
+		Map<String, Object> overrideValuesMap = getValueMap(objApiName, fieldValues);
+
+		Map<String, Object> allValues = null != valueMap? valueMap.clone() : null;
+		Map<String, Object> newValues = null != overrideValuesMap? overrideValuesMap.clone() : null;
+		if (null == allValues && null == newValues) {
+			return null;
 		}
-		Map<String, Object> defaultValues = valuesByType.get(objApiName);
-		return defaultValues;
+		if (null != allValues && null != newValues) {
+			allValues.putAll(newValues);
+		} else if (null != newValues){
+			allValues = newValues.clone();
+		}
+		return allValues;
 	}
 }

@@ -42,7 +42,7 @@
  *		
  */
 public with sharing class Mock {
-	public static MockDataStandard MOCK_DATA = null;//stick here your default custom MockData class or null
+	public static MockDataStandard MOCK_DATA = null;//instantiate here your default custom MockData class or null
 													//see MockTests.cls for examples
 
 	private static Map<String, Schema.SObjectType> gd = Schema.getGlobalDescribe();
@@ -72,7 +72,20 @@ public with sharing class Mock {
 	public static List<SObject> many(final String objApiName, final Map<String, Object> fieldValues, final Integer count, final Boolean saveIntoDb) {
 		final List<SObject> objs = new List<SObject>();
 		for (Integer i=0; i < count; i++) {
-			objs.add(one(objApiName, fieldValues, false, i));
+			//single object values
+			Map<String, Object> oneRecordValues = new Map<String, Object>();
+			for (String fName : fieldValues.keySet()) {
+				if (fieldValues.get(fName) instanceof List<Object>) {
+					//array of values
+					List<Object> values = (List<Object>)fieldValues.get(fName);
+					System.assert(values.size() > i,'Index ' + i + ' is too large for provided list of values of field ' + fName);
+					oneRecordValues.put(fName, values[i]);
+				} else {
+					//single value
+					oneRecordValues.put(fName, fieldValues.get(fName));
+				}
+			}
+			objs.add(one(objApiName, oneRecordValues, false));
 		}
 		if (saveIntoDb) {
 			Database.insert(objs);
@@ -80,35 +93,26 @@ public with sharing class Mock {
 		return objs;
 		
 	}
-	public static SObject one(final String objApiName, final Map<String, Object> fieldValues, final Boolean saveIntoDb) {
-		return one(objApiName, fieldValues, saveIntoDb, 0);
-	}
 	/**
 	 * @parm: index - used to specify which of Many records we are currently at
 	 *		only useful when fieldValues contains lists like this 'Name' => new String[]{'Name AA', 'Name BB', 'Name CX', ...}
 	 *		in which case Index points to the element in this array, i.e. 1 means Name = 'Name BB'
 	 *
 	 */
-	private static SObject one(final String objApiName, final Map<String, Object> fieldValues, final Boolean saveIntoDb, final Integer index) {
+	public static SObject one(final String objApiName, final Map<String, Object> fieldValues, final Boolean saveIntoDb) {
+		System.assert(null != fieldValues, 'param fieldValues must not be null.');
 		//check if given objApiName is supported
 		System.assert(null != MOCK_DATA, 'Mock.MOCK_DATA is not initialised. Assign your data fixture to Mock.MOCK_DATA first.');
-		System.assert(null != MOCK_DATA.getDefaultValues(objApiName),'Mock Data for type ' + objApiName + ' is not defined. Define data first.');
-		Map<String, Object> defaultValues = new Map<String, Object>(MOCK_DATA.getDefaultValues(objApiName));
+		Map<String, Object> defaultValues = MOCK_DATA.getDefaultValues(objApiName, fieldValues);
+		System.assert(null != defaultValues,'Mock Data for type ' + objApiName + ' is not defined. Define data first.');
 		
 		//instantiate SObject
 		SObject obj = createObject(objApiName);
 
 		//assign provided fields
 		for (String fName : fieldValues.keySet()) {
-			if (fieldValues.get(fName) instanceof List<Object>) {
-				//array of values
-				List<Object> values = (List<Object>)fieldValues.get(fName);
-				System.assert(values.size() > index,'Index ' + index + ' is too large for provided list of values of field ' + fName);
-				obj.put(fName, mergeValue(values[index]));
-			} else {
-				//single value
-				obj.put(fName, mergeValue(fieldValues.get(fName)));
-			}
+			//single value
+			obj.put(fName, mergeValue(fieldValues.get(fName)));
 			defaultValues.remove(fName);//remove provided field from default values map
 		}
 
@@ -116,6 +120,7 @@ public with sharing class Mock {
 		for (String fName : defaultValues.keySet()) {
 		    obj.put(fName, mergeValue(defaultValues.get(fName)));
 		}
+
 		if (saveIntoDb) {
 			Database.insert(obj);
 		}
