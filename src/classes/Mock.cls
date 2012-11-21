@@ -94,10 +94,10 @@ public with sharing class Mock {
 		
 	}
 	/**
-	 * @parm: index - used to specify which of Many records we are currently at
-	 *		only useful when fieldValues contains lists like this 'Name' => new String[]{'Name AA', 'Name BB', 'Name CX', ...}
-	 *		in which case Index points to the element in this array, i.e. 1 means Name = 'Name BB'
 	 *
+	 * @param: objApiName - API Name of SObject, ex: My_Object__c or Account
+	 * @param: fieldValues - user defined values which shall overwrite default values from fixture data
+	 * @param: saveIntoDb - if true then attempt to Save result via Database.insert(obj)
 	 */
 	public static SObject one(final String objApiName, final Map<String, Object> fieldValues, final Boolean saveIntoDb) {
 		System.assert(null != fieldValues, 'param fieldValues must not be null.');
@@ -127,6 +127,20 @@ public with sharing class Mock {
 		return obj;
 	}
 
+	/**
+	 * when SObject has been previously initialised we may want to top-up missing field values 
+	 * from fixtures data
+	 */
+	public static SObject populateNulls(final SObject obj) {
+		String objApiName = obj.getSObjectType().getDescribe().getName();//TODO check if it counts against Describe limits
+		final Map<String, Object> defaultValues = MOCK_DATA.getDefaultValues(objApiName,  new Map<String, Object>());
+		for (String fName : defaultValues.keySet()) {
+			if (null == obj.get(fName)) {
+				obj.put(fName, mergeValue(defaultValues.get(fName)));
+			}
+		}
+		return obj;
+	}
 	private static sObject createObject(String typeName) {
 		Schema.SObjectType targetType = gd.get(typeName);
 		System.assertNotEquals(null, targetType, 'Failed to get Describe for type: ' + typeName);

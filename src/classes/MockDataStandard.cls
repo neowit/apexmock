@@ -88,6 +88,8 @@ public with sharing abstract class MockDataStandard {
 
 
 	/**
+	 * main purpose of this method is to make sure that we return a copy of Fixture data rather than reference
+	 * so any changes to the result returned by getDefaultValues() will not affect fixtures
 	 * @param: objApiName - api name of salesforce object, e.g. Opportunity
 	 * @fieldValues: map in values provided by user, can be empty but never null
 	 */
