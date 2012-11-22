@@ -100,4 +100,14 @@ public with sharing class MockTests {
 		System.assertNotEquals(Mock.mergeValue('#{EMAIL}'), Mock.mergeValue('#{EMAIL}'),'Expected different email addresses');
 		
 	}
+
+	static testMethod void testTopUp () {
+		Mock.MOCK_DATA = new TestMockData();
+		Account acc = new Account();
+		acc.Name = 'Should Stay';
+		Mock.populateNulls(acc);
+		System.assertEquals('Should Stay', acc.Name, 'Previously defined field value must have been preserved');
+		System.assertEquals(ACCOUNT_VALUES.get('BillingStreet'), acc.BillingStreet, 'Undefined value must have been loaded from Fixture');
+
+	}
 }
