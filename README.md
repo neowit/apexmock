@@ -6,7 +6,7 @@ force.com Mock data and fixtures for Apex Unit Tests
 ApexMock is a library which can assist in dummy data generation for Apex Unit Tests
      
   in order to use Mock methods Mock.MOCK_DATA has to be initialised first
-
+<pre>
 	Mock.MOCK_DATA = new MyOrgMockDataSet1();
 	//now you can create some objects
 	//create Account and Insert into DB
@@ -19,9 +19,10 @@ ApexMock is a library which can assist in dummy data generation for Apex Unit Te
 	Database.insert(acc2);
 	...
 	//generate and save 2 Opportunities using acc1 and acc2 as their Accounts
-	List<Opportunity> opps = (List<Opportunity>)Mock.many('Opportunity', new Map<String, Object>{ 'Name' => 'Opp#{COUNTER}', 
-										'AccountId' => Id[] {acc1.Id, acc2.Id}}, 2, true); 
-
+	List<Opportunity> opps = (List<Opportunity>)Mock.many('Opportunity', 
+								new Map<String, Object>{ 'Name' => 'Opp#{COUNTER}', 
+								'AccountId' => Id[] {acc1.Id, acc2.Id}}, 2, true); 
+</pre>
  See MockTests.cls for more comprehensive usage examples
 
 Why ApexMock
@@ -29,25 +30,25 @@ Why ApexMock
 Two most popular ways to generate test data is
 
 1. create test data individually for every test like this
-
+<pre>
 		Account acc = new Account (Name = 'Test Acc', BillingStreet = 'Some street', Custom_Field__c = 'some value'...);
 		Database.insert(acc);
 		Opportunity opp = new Opportunity(AccountId = acc.id, StageName = 'Prospecting', Amount = 100, Some_Field__c = 'value here', ...);
 		Database.insert(opp);
-
+</pre>
   Even if in your current test you are only interested in Opportunity.Amount and Account.Custom_field__c, you still have to initialise lots
   of other fields (e.g. Account.Name) because of validation rules.
 
 2. In order to minimise repeated code you start writing something like this
-
+<pre>
 		public static Account createTestAccount(String name, String billingStreet, ..., Boolean saveIntoDb) {
 			//account initialisation code here
 		}
-
+</pre>
   then you use it like so:
-
+<pre>
 		Account acc = MyStaticTestClass.createTestAccount('Some Name', 'Some address', ..., true);
-
+</pre>
   With this approach you have to remember the order of parameters in each createTest\[xxx]() method or keep getting back to MyStaticTestClass
   to check what the order is.
 
