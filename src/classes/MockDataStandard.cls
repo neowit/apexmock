@@ -49,6 +49,10 @@ public with sharing abstract class MockDataStandard {
 		'Name' => 'Test-' + UserInfo.getOrganizationName(),
 		'Site' => 'Maidenhead'
 	};
+	public static Map<String, Object> CONTACT_VALUES = new Map<String, Object> {
+		'LastName' => 'Test CONTACT000#{COUNTER}',
+		'Email' => 'test-person#{COUNTER}@test.com'
+	};
 	public static Map<String, Object> LEAD_VALUES = new Map<String, Object> {
 		'LastName' => 'Test Lead000#{COUNTER}',
 		'Company' => 'Account-000#{COUNTER}'
@@ -71,6 +75,7 @@ public with sharing abstract class MockDataStandard {
 
 	static {
 		DEFAULT_VALUES_BY_TYPE.put('Account', ACCOUNT_VALUES);
+		DEFAULT_VALUES_BY_TYPE.put('Contact', CONTACT_VALUES);
 		DEFAULT_VALUES_BY_TYPE.put('Lead', LEAD_VALUES);
 		DEFAULT_VALUES_BY_TYPE.put('Opportunity', OPPORTUNITY_VALUES);
 		DEFAULT_VALUES_BY_TYPE.put('User', USER_VALUES);
