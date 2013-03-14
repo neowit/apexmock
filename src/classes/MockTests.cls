@@ -86,6 +86,14 @@ public with sharing class MockTests {
 		System.assertEquals(objs[1].get('Name'), 'name-B', 'Local field override did not work as expected');
 		System.assertEquals(objs[2].get('Name'), 'C-Name', 'Local field override did not work as expected');
 
+		//simulate like if accounts above have been saved and now have ids
+		final Account[] accs = new Account[]{new Account(Id='001000000000001'), new Account(Id='001000000000002')};
+		
+		//check parent/child
+		List<Contact> conts = (List<Contact>)Mock.many('Contact', new Map<String, Object>{'AccountId' => Mock.toIds(accs)}, 2, false); 
+		System.assertEquals(conts[0].get('AccountId'), accs[0].Id, 'field override did not work as expected');
+		System.assertEquals(conts[1].get('AccountId'), accs[1].Id, 'field override did not work as expected');
+
 	}
 	static testMethod void testMergeFields () {
 		//check if custom override works

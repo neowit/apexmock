@@ -170,6 +170,21 @@ public with sharing class Mock {
 	}
 
 	/**
+	 * helper method, useful to get Ids of parent records created with Mock.many to use in another Mock.many for children
+	 * ex: 
+	 * List<Account> accs = (List<Account>)Mock.many('Account', new Map<String, Object>{'Name' => 'Test Account#{COUNTER}'}, 2, true);
+	 * Mock.many('Opportunity', new Map<String, Object>{'Name'=> 'Test Opp#{COUNTER}', 'AccountId' => Mock.toIds(accs)...)
+	 */
+	public static List<Id> toIds(List<SObject> recs) {
+		List<Id> ids = new List<Id>();
+		for (SObject rec : recs) {
+			Id idVal = (Id)rec.get('Id');
+			System.assertNotEquals(null, idVal, 'All records passed to toIds() must have not NULL Ids. This record does not: ' + rec);
+			ids.add(idVal);
+		}
+		return ids;
+	}
+	/**
 	 * @param: val - string to check for function name
 	 * this method assumes that val is NOT null
 	 */
