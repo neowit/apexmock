@@ -45,6 +45,14 @@ public with sharing class Mock {
 	public static MockDataStandard MOCK_DATA = null;//instantiate here your default custom MockData class or null
 													//see MockTests.cls for examples
 
+	static {
+		//if there is MockData then instantiate it
+		Type t = Type.forName('MockData');
+		if (null != t) {
+			MOCK_DATA = (MockDataStandard)t.newInstance();
+
+		}
+	}
 	private static Map<String, Schema.SObjectType> gd = Schema.getGlobalDescribe();
 	
 
