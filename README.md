@@ -5,10 +5,14 @@ force.com Mock data and fixtures for Apex Unit Tests
 
 ApexMock is a library which can assist in dummy data generation for Apex Unit Tests
      
-  in order to use Mock methods Mock.MOCK_DATA has to be initialised first
+  in order to use Mock methods Mock.MOCK_DATA has to be initialised first  
 <pre>
 	Mock.MOCK_DATA = new MyOrgMockDataSet1();
-	//now you can create some objects
+</pre>
+If Mock.MOCK_DATA is not initialised then by default class named `MockData` will be used (if existis).
+
+Now you can create some objects
+<pre>
 	//create Account and Insert into DB
 	//only relevant fields need to be specified, the rest will be taken from MyOrgMockDataSet1
 	Account acc1 = (Account)Mock.one('Account', 
@@ -19,9 +23,19 @@ ApexMock is a library which can assist in dummy data generation for Apex Unit Te
 	Database.insert(acc2);
 	...
 	//generate and save 2 Opportunities using acc1 and acc2 as their Accounts
-	List<Opportunity> opps = (List<Opportunity>)Mock.many('Opportunity', 
+	List<Opportunity> opps = Mock.many('Opportunity', 
 								new Map<String, Object>{ 'Name' => 'Opp#{COUNTER}', 
 								'AccountId' => Id[] {acc1.Id, acc2.Id}}, 2, true); 
+	...
+	...
+
+	//same as above, but less code, all fields except Accoun.Name are taken from fixtures 
+	List&lt;Account> accs = Mock.many('Account', new Map<String, Object>{ 'Name' => 'Acc #{COUNTER}'}, 2, true)
+
+	//using Mock.toIds() so each opportunity will receive its own account Id
+	List&lt;Opportunity> opps2 = Mock.many('Opportunity', 
+								new Map<String, Object>{ 'Name' => 'Opp#{COUNTER}', 
+								'AccountId' => Mock.toIds(accs)}, 2, true); 
 </pre>
  See MockTests.cls for more comprehensive usage examples
 
@@ -62,7 +76,7 @@ i.e. in one case your Contacts must have all standard fields filled in and in Sp
 
 How do you solve that?
 
-Will you continue increasing your createTest\[xxx]() methods base?
+Will you continue increasing your createTest\[xxx]() methods base?  
 Or will you define different data sets once and then just swap them with one line of code like so:
 
 		Mock.MOCK_DATA = new MyOrgMockDataSet1();

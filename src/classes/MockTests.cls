@@ -71,7 +71,7 @@ public with sharing class MockTests {
 		//check if custom override works
 		Mock.MOCK_DATA = new TestMockData();
 		Mock.UNIQUE_COUNTER = 0;
-		List<Account> objs = (List<Account>)Mock.many('Account', new Map<String, Object>{'Name' => 'many-name#{COUNTER}'}, 3, false); 
+		List<Account> objs = Mock.many('Account', new Map<String, Object>{'Name' => 'many-name#{COUNTER}'}, 3, false); 
 		System.assertEquals(3, objs.size(),'Number of created records does not match expected.');
 		
 		//check that second object in the list contains expected values
@@ -80,7 +80,7 @@ public with sharing class MockTests {
 		System.assertEquals(objs[1].get('BillingStreet'), ACCOUNT_VALUES.get('BillingStreet'), 'Field value from custom dataset has not been assigned');
 
 		//test array values
-		objs = (List<Account>)Mock.many('Account', new Map<String, Object>{'Name' => new String[]{'name-A', 'name-B', 'C-Name'}}, 3, false); 
+		objs = Mock.many('Account', new Map<String, Object>{'Name' => new String[]{'name-A', 'name-B', 'C-Name'}}, 3, false); 
 		System.assertEquals(3, objs.size(),'Number of created records does not match expected.');
 		System.assertEquals(objs[0].get('Name'), 'name-A', 'Local field override did not work as expected');
 		System.assertEquals(objs[1].get('Name'), 'name-B', 'Local field override did not work as expected');
@@ -90,7 +90,7 @@ public with sharing class MockTests {
 		final Account[] accs = new Account[]{new Account(Id='001000000000001'), new Account(Id='001000000000002')};
 		
 		//check parent/child
-		List<Contact> conts = (List<Contact>)Mock.many('Contact', new Map<String, Object>{'AccountId' => Mock.toIds(accs)}, 2, false); 
+		List<Contact> conts = Mock.many('Contact', new Map<String, Object>{'AccountId' => Mock.toIds(accs)}, 2, false); 
 		System.assertEquals(conts[0].get('AccountId'), accs[0].Id, 'field override did not work as expected');
 		System.assertEquals(conts[1].get('AccountId'), accs[1].Id, 'field override did not work as expected');
 
