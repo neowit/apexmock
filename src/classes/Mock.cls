@@ -165,14 +165,19 @@ public with sharing class Mock {
 		Object resVal = val;
 		if (null != val && val instanceof String) {
 			String strVal = (String)val;
-			if (containsFunction(strVal, 'EMAIL')) {
-				strVal = (String)setFunctionValue(strVal, 'EMAIL', 'test-email#{COUNTER}@a' + UserInfo.getUserId() + 'b.tst');
-			}
-			if (containsFunction(strVal, 'COUNTER')) {
+			if (containsFunction(strVal, 'COUNTER_I')) {//integer counter
 				UNIQUE_COUNTER++;
-				strVal = (String)setFunctionValue(strVal, 'COUNTER', '' + UNIQUE_COUNTER);
+				resVal = UNIQUE_COUNTER;
+			} else {
+				if (containsFunction(strVal, 'EMAIL')) {
+					strVal = (String)setFunctionValue(strVal, 'EMAIL', 'test-email#{COUNTER}@a' + UserInfo.getUserId() + 'b.tst');
+				}
+				if (containsFunction(strVal, 'COUNTER')) {
+					UNIQUE_COUNTER++;
+					strVal = (String)setFunctionValue(strVal, 'COUNTER', '' + UNIQUE_COUNTER);
+				}
+				resVal = strVal;
 			}
-			resVal = strVal;
 		}
 		return resVal;//no substitution
 	}
