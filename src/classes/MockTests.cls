@@ -118,4 +118,17 @@ public with sharing class MockTests {
 		System.assertEquals(ACCOUNT_VALUES.get('BillingStreet'), acc.BillingStreet, 'Undefined value must have been loaded from Fixture');
 
 	}
+
+	/**
+	 * we already tested if custom fixture override works above in testFieldsInitialisation
+	 * so here just provide code coverage for example class MockData
+	 */
+	static testMethod void testCoverageForCustomFixtureExample () {
+		//if we do not specify Mock.MOCK_DATA explicitly then system will load MockData class by default if one exists
+		//Mock.MOCK_DATA = new MockData();
+
+		//just cause MockData.getValueMap() call
+		Account acc = (Account)Mock.one('Account', false); 
+	}
+	
 }
