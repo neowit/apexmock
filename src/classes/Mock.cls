@@ -32,7 +32,7 @@
  *	 Database.insert(acc2);
  *	 ...
  *	 //generate and save 2 Opportunities using acc1 and acc2 as their Accounts
- *	 List<Opportunity> opps = (List<Opportunity>)Mock.many('Opportunity', 
+ *	 List<Opportunity> opps = Mock.many('Opportunity', 
  *									new Map<String, Object>{ 'Name' => 'Opp#{COUNTER}', 'AccountId' => Id[] {acc1.Id, acc2.Id}}, 2, true); 
  *
  *  See MockTests.cls for more comprehensive usage examples
@@ -101,6 +101,14 @@ public with sharing class Mock {
 		return objs;
 		
 	}
+	/**
+	 * same as Mock.many with 4 params above, but this one to be used when we do not want to specify anything extra
+	 * and values of all fields are to be initiated from Fixtures
+	 */
+	public static List<SObject> many(final String objApiName, final Integer count, final Boolean saveIntoDb) {
+		return many(objApiName, new Map<String, Object>{}, count, saveIntoDb );
+	}
+
 	/**
 	 *
 	 * @param: objApiName - API Name of SObject, ex: My_Object__c or Account

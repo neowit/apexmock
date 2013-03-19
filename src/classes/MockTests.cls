@@ -70,9 +70,17 @@ public with sharing class MockTests {
 	static testMethod void testMockMany () {
 		//check if custom override works
 		Mock.MOCK_DATA = new TestMockData();
+
 		Mock.UNIQUE_COUNTER = 0;
-		List<Account> objs = Mock.many('Account', new Map<String, Object>{'Name' => 'many-name#{COUNTER}'}, 3, false); 
+		//test many() version without field overrides
+		List<Account> objs = Mock.many('Account', 3, false); 
 		System.assertEquals(3, objs.size(),'Number of created records does not match expected.');
+		System.assertNotEquals(null, objs[0].Name, 'Expected Name field to be initialised from Fixtures');
+
+		Mock.UNIQUE_COUNTER = 0;
+		objs = Mock.many('Account', new Map<String, Object>{'Name' => 'many-name#{COUNTER}'}, 3, false); 
+		System.assertEquals(3, objs.size(),'Number of created records does not match expected.');
+
 		
 		//check that second object in the list contains expected values
 		//COUNTER for second record will be 2
