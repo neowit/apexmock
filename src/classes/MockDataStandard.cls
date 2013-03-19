@@ -55,7 +55,8 @@ public with sharing abstract class MockDataStandard {
 	};
 	public static Map<String, Object> EVENT_VALUES = new Map<String, Object> {
 		'Subject' => 'Test Event',
-		'ActivityDate' => System.today()
+		'ActivityDateTime' => System.now(),
+		'DurationInMinutes' => 60
 	};
 	public static Map<String, Object> LEAD_VALUES = new Map<String, Object> {
 		'LastName' => 'Test Lead000#{COUNTER}',
