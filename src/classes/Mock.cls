@@ -44,6 +44,7 @@
 public with sharing class Mock {
 	public static MockDataStandard MOCK_DATA = null;//instantiate here your default custom MockData class or null
 													//see MockTests.cls for examples
+	public static String DEPENDS_ON = 'DEPENDS_ON';
 
 	static {
 		//if there is MockData then instantiate it
@@ -128,14 +129,31 @@ public with sharing class Mock {
 		//assign provided fields
 		for (String fName : fieldValues.keySet()) {
 			//single value
-			obj.put(fName, mergeValue(fieldValues.get(fName)));
-			defaultValues.remove(fName);//remove provided field from default values map
+			if (DEPENDS_ON != fName) {
+				obj.put(fName, mergeValue(fieldValues.get(fName)));
+				defaultValues.remove(fName);//remove provided field from default values map
+			}
 		}
 
 		//assign default fields
 		for (String fName : defaultValues.keySet()) {
-		    obj.put(fName, mergeValue(defaultValues.get(fName)));
+			//single value
+			if (DEPENDS_ON != fName) {
+				obj.put(fName, mergeValue(defaultValues.get(fName)));
+			}
 		}
+
+		//initialise dependencies based on user provided values
+		final Map<String, Object> dependsOn = (Map<String, Object>)fieldValues.get(DEPENDS_ON);
+		Map<String, SObject> recordByFieldName = initDependencies(obj, dependsOn, new Map<String, SObject>());
+		assignDependencies(obj, dependsOn, recordByFieldName);
+
+		//now check if defaultValues contains DEPENDS_ON which has not yet been created
+		dependsOn = (Map<String, Object>)defaultValues.get(DEPENDS_ON);
+		recordByFieldName = initDependencies(obj, dependsOn, recordByFieldName);
+		assignDependencies(obj, dependsOn, recordByFieldName);
+
+		
 
 		if (saveIntoDb) {
 			Database.insert(obj);
@@ -220,4 +238,48 @@ public with sharing class Mock {
 		return val.replaceAll('#\\{'+functionName+'\\}', value);
 	}
 	
+	/**
+	 *	DEPENDS_ON defines what fields require other object to be created before current object can be saved
+	 *	...
+	 *	Mock.DEPENDS_ON => new Map<String, String>{'AccountId' => 'Account', 'My_Obj_Ref__c' => 'My_Obj__c'...}
+	 *	...
+	 *
+	 * @param: obj - SObject record which we are currently mocking
+	 * @param: dependsOn - fieldName => ObjectTypeName map
+	 * @param: recordByFieldName - fieldName => SObject - earlier created records
+	 */
+	private static Map<String, SObject> initDependencies(final SObject obj, final Map<String, Object> dependsOn, final Map<String, SObject> recordByFieldName) {
+
+		if (null != dependsOn) {
+		
+			for (String fName : dependsOn.keySet()) {
+				if (null == obj.get(fName) && !recordByFieldName.containsKey(fName)) {//no need to create a parent record for the same field twice
+					String objType = (String)dependsOn.get(fName);
+					//init object from standard fixtures and Save
+					SObject relatedObj = (SObject)Mock.one(objType, true);
+					recordByFieldName.put(fName, relatedObj);
+				}
+			}
+		}
+
+		return recordByFieldName;
+		
+
+	}
+
+	/**
+	 * for every field mentioned as a Key in dependsOn assign Id of record from recordByFieldName
+	 */
+	private static void assignDependencies(final SObject obj, final Map<String, Object> dependsOn, Map<String, SObject> recordByFieldName) {
+		if (null != dependsOn) {
+			for (String fName : dependsOn.keySet()) {
+				if (null == obj.get(fName)) {
+					SObject relatedObj = recordByFieldName.get(fName);
+					if (null != relatedObj) {
+						obj.put(fName, (Id)relatedObj.get('id'));
+					}
+				}
+			}
+		}
+	}
 }

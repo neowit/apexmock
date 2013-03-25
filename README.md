@@ -36,6 +36,22 @@ Now you can create some objects
 	List&lt;Opportunity> opps2 = Mock.many('Opportunity', 
 								new Map<String, Object>{ 'Name' => 'Opp#{COUNTER}', 
 								'AccountId' => Mock.toIds(accs)}, 2, true); 
+	...
+	...
+	
+	//similar to above, but we do not care which Account each Opportunity will be assigned to, 
+	//because it is not relevant in our test
+	//using Mock.DEPENDS_ON
+	Map<String, String> dependsOn = new Map<String, String>{'AccountId' => 'Account', 'My_Related_Object_Ref__c' => 'My_Related_Object__c'}
+	List&lt;Opportunity> opps2 = Mock.many('Opportunity', 
+								new Map<String, Object>{ 'Name' => 'Opp#{COUNTER}', Mock.DEPENDS_ON => dependsOn}, 2, true); 
+
+</pre>
+Another example, create 3 Contacts using only defined earlier fixtures.  
+The following single line piece of code will create and save a separate Account for each contact.  
+See MockDataStandard.CONTACT_VALUES for an example of how DEPENDS_ON is defined.
+<pre>
+	List&lt;Contact> opps2 = Mock.many('Contact', 3, true); 
 </pre>
  See MockTests.cls for more comprehensive usage examples
 

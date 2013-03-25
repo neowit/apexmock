@@ -139,4 +139,22 @@ public with sharing class MockTests {
 		Account acc = (Account)Mock.one('Account', false); 
 	}
 	
+	/**
+	 * check how DEPENDS_ON map is resolved
+	 */
+	static testMethod void testDependendsOn () {
+		//there is a good chance that target Org has required fields that are not initated in standard fixtures
+		//so using try..catch to avoid failing tests
+		try	{
+
+			Contact cont = (Contact)Mock.one('Contact', false); 
+			//check if AccountId from standard fixture is initialised
+			System.assertNotEquals(null, cont.AccountId,'Expected AccountId to be initialised as defined in MockDataStandard.CONTACT_VALUES[DEPENDS_ON]');
+			
+		} catch (Exception eIgnore) {}
+		
+
+		
+	}
+	
 }

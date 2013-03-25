@@ -50,8 +50,11 @@ public with sharing abstract class MockDataStandard {
 		'Site' => 'Maidenhead'
 	};
 	public static Map<String, Object> CONTACT_VALUES = new Map<String, Object> {
-		'LastName' => 'Test CONTACT000#{COUNTER}',
-		'Email' => 'test-person#{COUNTER}@test.com'
+		'FirstName' => 'Test',
+		'LastName' => 'CONTACT000#{COUNTER}',
+		'Email' => 'test-person#{COUNTER}@test.com',
+		//DEPENDS_ON defines what fields require other object to be created before current object can be saved
+		Mock.DEPENDS_ON => new Map<String, String>{'AccountId' => 'Account'}
 	};
 	public static Map<String, Object> EVENT_VALUES = new Map<String, Object> {
 		'Subject' => 'Test Event',
@@ -63,6 +66,7 @@ public with sharing abstract class MockDataStandard {
 		'Company' => 'Account-000#{COUNTER}'
 	};
 	public static Map<String, Object> OPPORTUNITY_VALUES = new Map<String, Object> {
+		'Name' => 'Opp 000#{COUNTER}',
 		'StageName' => 'Prospecting',
 		'CloseDate' => System.today()
 	};
