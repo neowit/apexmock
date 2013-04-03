@@ -152,8 +152,21 @@ public with sharing class MockTests {
 			System.assertNotEquals(null, cont.AccountId,'Expected AccountId to be initialised as defined in MockDataStandard.CONTACT_VALUES[DEPENDS_ON]');
 			
 		} catch (Exception eIgnore) {}
+	}
+	
+	/**
+	 * check how mass clone works
+	 */
+	static testMethod void testClone () {
+		Mock.UNIQUE_COUNTER = 0;
+		List<Account> accs = Mock.many('Account', new Map<String, Object>{'Name' => 'My-Account#{COUNTER}', 'Description' => 'A Description'}, 3, false); 
+		System.debug('ag§§ start now');
 		
+		List<Account> accsClone = Mock.clone(accs, new Map<String, Object>{'Description' => 'Clone Description'}, false);
 
+		System.assertNotEquals(accs[0].Description, accsClone[0].Description, 'Expected different description.');
+		System.assertEquals('Clone Description', accsClone[0].Description, 'Expected description set in clone() operation.');
+		
 		
 	}
 	

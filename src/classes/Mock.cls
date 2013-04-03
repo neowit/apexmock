@@ -74,6 +74,24 @@ public with sharing class Mock {
 	}
 
 	/**
+	 *
+	 * @param: objApiName - API Name of SObject, ex: My_Object__c or Account
+	 * @param: fieldValues - user defined values which shall overwrite default values from fixture data
+	 * @param: saveIntoDb - if true then attempt to Save result via Database.insert(obj)
+	 */
+	public static SObject one(final String objApiName, final Map<String, Object> fieldValues, final Boolean saveIntoDb) {
+
+		//instantiate SObject
+		SObject obj = createObject(objApiName);
+		populateFieldValues(obj, fieldValues);
+
+		if (saveIntoDb) {
+			Database.insert(obj);
+		}
+		return obj;
+	}
+
+	/**
 	 * create multiple instances of object of specified type
 	 * it is recommended that fieldValues contains a field with #{COUNTER} merge value
 	 * this way created objects will not be identical
@@ -111,54 +129,22 @@ public with sharing class Mock {
 	}
 
 	/**
-	 *
-	 * @param: objApiName - API Name of SObject, ex: My_Object__c or Account
-	 * @param: fieldValues - user defined values which shall overwrite default values from fixture data
+	 * using given objs as a template create their clones and overwrite values of provided fieldValues
+	 * @param: objs - list of Sobjects to use as data template
+	 * @param: fieldValues - user defined values which shall overwrite data from template objects
 	 * @param: saveIntoDb - if true then attempt to Save result via Database.insert(obj)
 	 */
-	public static SObject one(final String objApiName, final Map<String, Object> fieldValues, final Boolean saveIntoDb) {
-		System.assert(null != fieldValues, 'param fieldValues must not be null.');
-		//check if given objApiName is supported
-		System.assert(null != MOCK_DATA, 'Mock.MOCK_DATA is not initialised. Assign your data fixture to Mock.MOCK_DATA first.');
-		Map<String, Object> defaultValues = MOCK_DATA.getDefaultValues(objApiName, fieldValues);
-		System.assert(null != defaultValues,'Mock Data for type ' + objApiName + ' is not defined. Define data first.');
-		
-		//instantiate SObject
-		SObject obj = createObject(objApiName);
-
-		//assign provided fields
-		for (String fName : fieldValues.keySet()) {
-			//single value
-			if (DEPENDS_ON != fName) {
-				obj.put(fName, mergeValue(fieldValues.get(fName)));
-				defaultValues.remove(fName);//remove provided field from default values map
-			}
+	public static List<SObject> clone(List<SObject> objs, final Map<String, Object> fieldValues, final Boolean saveIntoDb) {
+		final List<SObject> objClones = new List<SObject>();
+		for (SObject obj : objs) {
+		    SObject objClone = obj.clone(false, true);
+			populateFieldValues(objClone, fieldValues);
+			objClones.add(objClone);
 		}
-
-		//assign default fields
-		for (String fName : defaultValues.keySet()) {
-			//single value
-			if (DEPENDS_ON != fName) {
-				obj.put(fName, mergeValue(defaultValues.get(fName)));
-			}
-		}
-
-		//initialise dependencies based on user provided values
-		final Map<String, Object> dependsOn = (Map<String, Object>)fieldValues.get(DEPENDS_ON);
-		Map<String, SObject> recordByFieldName = initDependencies(obj, dependsOn, new Map<String, SObject>());
-		assignDependencies(obj, dependsOn, recordByFieldName);
-
-		//now check if defaultValues contains DEPENDS_ON which has not yet been created
-		dependsOn = (Map<String, Object>)defaultValues.get(DEPENDS_ON);
-		recordByFieldName = initDependencies(obj, dependsOn, recordByFieldName);
-		assignDependencies(obj, dependsOn, recordByFieldName);
-
-		
-
 		if (saveIntoDb) {
-			Database.insert(obj);
+			Database.insert(objClones);
 		}
-		return obj;
+		return objClones;
 	}
 
 	/**
@@ -166,7 +152,8 @@ public with sharing class Mock {
 	 * from fixtures data
 	 */
 	public static SObject populateNulls(final SObject obj) {
-		String objApiName = obj.getSObjectType().getDescribe().getName();//TODO check if it counts against Describe limits
+		//String objApiName = obj.getSObjectType().getDescribe().getName();
+		String objApiName = String.valueOf(obj.getSObjectType());//TODO check how this works when Namespace is involved
 		final Map<String, Object> defaultValues = MOCK_DATA.getDefaultValues(objApiName,  new Map<String, Object>());
 		for (String fName : defaultValues.keySet()) {
 			if (null == obj.get(fName)) {
@@ -174,13 +161,6 @@ public with sharing class Mock {
 			}
 		}
 		return obj;
-	}
-	private static sObject createObject(String typeName) {
-		Schema.SObjectType targetType = gd.get(typeName);
-		System.assertNotEquals(null, targetType, 'Failed to get Describe for type: ' + typeName);
-		
-		// Instantiate an sObject with the type passed in as an argument at run time.
-		return targetType.newSObject();
 	}
 
 	public static Integer UNIQUE_COUNTER = 0;
@@ -230,6 +210,54 @@ public with sharing class Mock {
 		}
 		return ids;
 	}
+
+	//////////////////////////////////////////////////////////////////////////////////////////////////
+	private static SObject populateFieldValues(SObject obj, final Map<String, Object> fieldValues) {
+		System.assert(null != fieldValues, 'param fieldValues must not be null.');
+		//check if given objApiName is supported
+		String objApiName = String.valueOf(obj.getSObjectType());
+		System.assert(null != MOCK_DATA, 'Mock.MOCK_DATA is not initialised. Assign your data fixture to Mock.MOCK_DATA first.');
+		Map<String, Object> defaultValues = MOCK_DATA.getDefaultValues(objApiName, fieldValues);
+		System.assert(null != defaultValues,'Mock Data for type ' + objApiName + ' is not defined. Define data first.');
+		
+
+		//assign provided fields
+		for (String fName : fieldValues.keySet()) {
+			//single value
+			if (DEPENDS_ON != fName) {
+				obj.put(fName, mergeValue(fieldValues.get(fName)));
+				defaultValues.remove(fName);//remove provided field from default values map
+			}
+		}
+
+		//assign default fields
+		for (String fName : defaultValues.keySet()) {
+			//single value
+			if (DEPENDS_ON != fName) {
+				obj.put(fName, mergeValue(defaultValues.get(fName)));
+			}
+		}
+
+		//initialise dependencies based on user provided values
+		final Map<String, Object> dependsOn = (Map<String, Object>)fieldValues.get(DEPENDS_ON);
+		Map<String, SObject> recordByFieldName = initDependencies(obj, dependsOn, new Map<String, SObject>());
+		assignDependencies(obj, dependsOn, recordByFieldName);
+
+		//now check if defaultValues contains DEPENDS_ON which has not yet been created
+		dependsOn = (Map<String, Object>)defaultValues.get(DEPENDS_ON);
+		recordByFieldName = initDependencies(obj, dependsOn, recordByFieldName);
+		assignDependencies(obj, dependsOn, recordByFieldName);
+		return obj;
+	}
+
+	private static sObject createObject(String typeName) {
+		Schema.SObjectType targetType = gd.get(typeName);
+		System.assertNotEquals(null, targetType, 'Failed to get Describe for type: ' + typeName);
+		
+		// Instantiate an sObject with the type passed in as an argument at run time.
+		return targetType.newSObject();
+	}
+
 	/**
 	 * @param: val - string to check for function name
 	 * this method assumes that val is NOT null
