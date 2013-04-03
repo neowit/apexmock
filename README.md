@@ -42,10 +42,11 @@ Now you can create some objects
 	//similar to above, but we do not care which Account each Opportunity will be assigned to, 
 	//because it is not relevant in our test
 	//using Mock.DEPENDS_ON
-	Map<String, String> dependsOn = new Map<String, String>{'AccountId' => 'Account', 'My_Related_Object_Ref__c' => 'My_Related_Object__c'}
+	Map&lt;String, String&gt; dependsOn = new Map&lt;String, String&gt;{'AccountId' => 'Account', 'My_Related_Object_Ref__c' => 'My_Related_Object__c'};
 	List&lt;Opportunity> opps2 = Mock.many('Opportunity', 
 								new Map<String, Object>{ 'Name' => 'Opp#{COUNTER}', Mock.DEPENDS_ON => dependsOn}, 2, true); 
-
+								
+	//ideally above Mock.DEPENDS_ON should be part of custom data fixture, e.g. in MockData class, but if we need to overwrite Mock.DEPENDS_ON value locally then we can.
 </pre>
 Another example, create 3 Contacts using only defined earlier fixtures.  
 The following single line piece of code will create and save a separate Account for each contact.  
