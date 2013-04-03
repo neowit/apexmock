@@ -215,10 +215,17 @@ public with sharing class Mock {
 	 * Mock.many('Opportunity', new Map<String, Object>{'Name'=> 'Test Opp#{COUNTER}', 'AccountId' => Mock.toIds(accs)...)
 	 */
 	public static List<Id> toIds(List<SObject> recs) {
+		return toIds(recs, 'id');
+	}
+
+	/**
+	 * same as toIds(recs) but we can also specify what field to use, as opposed to it just be 'id' 
+	 */
+	public static List<Id> toIds(List<SObject> recs, final String fName) {
 		List<Id> ids = new List<Id>();
 		for (SObject rec : recs) {
-			Id idVal = (Id)rec.get('Id');
-			System.assertNotEquals(null, idVal, 'All records passed to toIds() must have not NULL Ids. This record does not: ' + rec);
+			Id idVal = (Id)rec.get(fName);
+			System.assertNotEquals(null, idVal, 'All records passed to toIds() must have not NULL '+fName+'(s). This record does not: ' + rec);
 			ids.add(idVal);
 		}
 		return ids;
