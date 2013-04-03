@@ -55,4 +55,31 @@ public with sharing class MockUtils {
 		return recType;
 	}
 
+	/**
+	 * check how getProfile method works
+	 */
+	static testMethod void testGetProfile () {
+		//every org has System Administrator profile so we can reliably test that it exists
+		System.assertNotEquals(null, MockUtils.getProfile('System Administrator'), 'System Administrator profile always exists');
+	}
+	
+	/**
+	 * check how getRecordType method works
+	 */
+	static testMethod void testGetRecordType () {
+		//check what record types this Org has
+		final List<RecordType> rts = [select Id, DeveloperName, SobjectType from RecordType limit 1];
+		
+		Id rtExpectedId = null;
+		Id rtLoadedId = null;
+		if (!rts.isEmpty()) {
+			RecordType rtLoaded = MockUtils.getRecordType(rts[0].SobjectType, rts[0].DeveloperName);
+			RecordType rtExpected = rts[0];
+			rtLoadedId = rtLoaded.Id;
+			rtExpectedId = rtLoaded.Id;
+		}
+		//every org has System Administrator profile so we can reliably test that it exists
+		System.assertEquals(rtExpectedId, rtLoadedId, 'did not find RecordType which was expected');
+	}
+
 }
