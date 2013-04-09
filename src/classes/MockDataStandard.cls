@@ -109,8 +109,8 @@ public with sharing abstract class MockDataStandard {
 	 * @fieldValues: map in values provided by user, can be empty but never null
 	 */
 	public Map<String, Object> getDefaultValues(final String objApiName, final Map<String, Object> fieldValues) {
-		Map<String, Object> valueMap = DEFAULT_VALUES_BY_TYPE.get(objApiName);
-		Map<String, Object> overrideValuesMap = getValueMap(objApiName, fieldValues);
+		Map<String, Object> valueMap = Mock.toLowerCaseMap(DEFAULT_VALUES_BY_TYPE.get(objApiName));
+		Map<String, Object> overrideValuesMap = Mock.toLowerCaseMap(getValueMap(objApiName, Mock.toLowerCaseMap(fieldValues)));
 
 		Map<String, Object> allValues = null != valueMap? valueMap.clone() : null;
 		Map<String, Object> newValues = null != overrideValuesMap? overrideValuesMap.clone() : null;

@@ -44,7 +44,7 @@
 public with sharing class Mock {
 	public static MockDataStandard MOCK_DATA = null;//instantiate here your default custom MockData class or null
 													//see MockTests.cls for examples
-	public static String DEPENDS_ON = 'DEPENDS_ON';
+	public static String DEPENDS_ON = 'depends_on';
 
 	static {
 		//if there is MockData then instantiate it
@@ -152,8 +152,7 @@ public with sharing class Mock {
 	 * from fixtures data
 	 */
 	public static SObject populateNulls(final SObject obj) {
-		//String objApiName = obj.getSObjectType().getDescribe().getName();
-		String objApiName = String.valueOf(obj.getSObjectType());//TODO check how this works when Namespace is involved
+		String objApiName = getObjectApiName(obj);
 		final Map<String, Object> defaultValues = MOCK_DATA.getDefaultValues(objApiName,  new Map<String, Object>());
 		for (String fName : defaultValues.keySet()) {
 			if (null == obj.get(fName)) {
@@ -185,7 +184,8 @@ public with sharing class Mock {
 				resVal = strVal;
 			}
 		}
-		return resVal;//no substitution
+		
+		return resVal;
 	}
 
 	/**
@@ -211,21 +211,37 @@ public with sharing class Mock {
 		return ids;
 	}
 
+	/**
+	 * Map is case-sensitive but we do not know the case in which user will provide values, so have to 
+	 * spend extra effort to bring everything to lower case
+	 */
+	public static Map<String, Object> toLowerCaseMap(final Map<String, Object> fieldValues) {
+		final Map<String, Object> lowerCaseMap = new Map<String, Object>();
+		if (null != fieldValues) {
+			for (String fName : fieldValues.keySet()) {
+				lowerCaseMap.put(fName.toLowerCase(), fieldValues.get(fName));
+			}
+		}
+		return lowerCaseMap;
+
+	}
+
 	//////////////////////////////////////////////////////////////////////////////////////////////////
 	private static SObject populateFieldValues(SObject obj, final Map<String, Object> fieldValues) {
 		System.assert(null != fieldValues, 'param fieldValues must not be null.');
 		//check if given objApiName is supported
 		String objApiName = String.valueOf(obj.getSObjectType());
 		System.assert(null != MOCK_DATA, 'Mock.MOCK_DATA is not initialised. Assign your data fixture to Mock.MOCK_DATA first.');
-		Map<String, Object> defaultValues = MOCK_DATA.getDefaultValues(objApiName, fieldValues);
+		final Map<String, Object> fieldValuesInternal = toLowerCaseMap(fieldValues);
+		Map<String, Object> defaultValues = toLowerCaseMap(MOCK_DATA.getDefaultValues(objApiName, fieldValuesInternal));
 		System.assert(null != defaultValues,'Mock Data for type ' + objApiName + ' is not defined. Define data first.');
 		
 
 		//assign provided fields
-		for (String fName : fieldValues.keySet()) {
+		for (String fName : fieldValuesInternal.keySet()) {
 			//single value
 			if (DEPENDS_ON != fName) {
-				obj.put(fName, mergeValue(fieldValues.get(fName)));
+				obj.put(fName, mergeValue(fieldValuesInternal.get(fName)));
 				defaultValues.remove(fName);//remove provided field from default values map
 			}
 		}
@@ -239,7 +255,7 @@ public with sharing class Mock {
 		}
 
 		//initialise dependencies based on user provided values
-		final Map<String, Object> dependsOn = (Map<String, Object>)fieldValues.get(DEPENDS_ON);
+		final Map<String, Object> dependsOn = (Map<String, Object>)fieldValuesInternal.get(DEPENDS_ON);
 		Map<String, SObject> recordByFieldName = initDependencies(obj, dependsOn, new Map<String, SObject>());
 		assignDependencies(obj, dependsOn, recordByFieldName);
 
@@ -256,6 +272,11 @@ public with sharing class Mock {
 		
 		// Instantiate an sObject with the type passed in as an argument at run time.
 		return targetType.newSObject();
+	}
+	private static Map<String, Schema.SObjectField> getFieldMap(String typeName) {
+		Schema.SObjectType targetType = gd.get(typeName);
+		System.assertNotEquals(null, targetType, 'Failed to get Describe for type: ' + typeName);
+		return targetType.getDescribe().fields.getMap();
 	}
 
 	/**
@@ -316,5 +337,10 @@ public with sharing class Mock {
 				}
 			}
 		}
+	}
+
+	private static String getObjectApiName(SObject obj) {
+		//String objApiName = obj.getSObjectType().getDescribe().getName();
+		return String.valueOf(obj.getSObjectType());//TODO check how this works when Namespace is involved
 	}
 }
