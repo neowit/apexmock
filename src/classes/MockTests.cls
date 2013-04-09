@@ -26,7 +26,7 @@ public with sharing class MockTests {
 	//////////////////////// unit tests /////////////////////////////////////
 	private static Map<String, Object> ACCOUNT_VALUES = new Map<String, Object> {
 		'Name' => 'Alternate-Name',
-		'BillingStreet' => 'other'
+		'BillingStreet' => 'mock test street'
 	};
 	class TestMockData extends MockDataStandard {
 		/**
@@ -160,12 +160,24 @@ public with sharing class MockTests {
 	static testMethod void testClone () {
 		Mock.UNIQUE_COUNTER = 0;
 		List<Account> accs = Mock.many('Account', new Map<String, Object>{'Name' => 'My-Account#{COUNTER}', 'Description' => 'A Description'}, 3, false); 
-		System.debug('ag§§ start now');
 		
 		List<Account> accsClone = Mock.clone(accs, new Map<String, Object>{'Description' => 'Clone Description'}, false);
 
 		System.assertNotEquals(accs[0].Description, accsClone[0].Description, 'Expected different description.');
 		System.assertEquals('Clone Description', accsClone[0].Description, 'Expected description set in clone() operation.');
+		
+		
+	}
+	/**
+	 * check how Mock.many(final SObject objTemplate, final Integer count, final Boolean saveIntoDb) works
+	 */
+	static testMethod void testManyWithSObjectTemplate () {
+		Mock.MOCK_DATA = new TestMockData();
+		Mock.UNIQUE_COUNTER = 0;
+		List<Account> accs = Mock.many(new Account(Name = 'My-Account#{COUNTER}', Description = 'A Description'), 3, false); 
+		System.assertEquals('A Description', accs[0].Description, 'Expected description set in clone() operation.');
+		System.assertEquals('My-Account2', accs[1].Name, 'Expected merge value for Account.Name to be expanded.');
+		System.assertEquals(ACCOUNT_VALUES.get('BillingStreet'), accs[0].BillingStreet, 'Expected BillingStreet to be taken from fixture.');
 		
 		
 	}

@@ -127,6 +127,42 @@ public with sharing class Mock {
 	public static List<SObject> many(final String objApiName, final Integer count, final Boolean saveIntoDb) {
 		return many(objApiName, new Map<String, Object>{}, count, saveIntoDb );
 	}
+	/**
+	 * same as Mock.many with 4 parameters but using provided SObject as a tempalte instead of field values map
+	 * Merge values will be expanded and all other fields initiated from Fixtures
+	 * e.g.
+	 * final List<Account> accs = Mock.many(new Account(Name = 'Acc#{COUNT}', OwnerId = UserInfo.getUserId()), 3, true);
+	 * will create 3 Accounts with Names = 'Acc1', 'Acc2', 'Acc3' and current user as Owner
+	 * All other fields will be initiated as defined in Fixtures (MockDataStandard and other)
+	 *
+	 * CAVEAT: unlike other methods that accept  "Map<String, Object> fieldValues" - in case of template SObject
+	 * we can not identify whether user deliberately provided NULL value for a certain field or this field is not initialised
+	 * So if you need to specify NULL for a field then use Mock.Many(objApiName, fieldValues, count, saveIntoDb)
+	 */
+	public static List<SObject> many(final SObject objTemplate, final Integer count, final Boolean saveIntoDb) {
+		//figure out what fields user has initialised
+		String objApiName = getObjectApiName(objTemplate);
+		Map<String, Schema.SObjectField> fieldMap = getFieldMap(objApiName);
+
+		final Map<String, Object> fieldValues = new Map<String, Object>();
+		for (String fName : fieldMap.keySet()) {
+			fName = fName.toLowerCase();
+			if (null != objTemplate.get(fName)) {
+				fieldValues.put(fName, objTemplate.get(fName));
+			}
+		}
+		
+		final List<SObject> objs = new List<SObject>();
+		for (Integer i=0; i< count; i++) {
+			SObject obj = createObject(objApiName);
+			populateFieldValues(obj, fieldValues);
+			objs.add(obj);
+		}
+		if (saveIntoDb) {
+			Database.insert(objs);
+		}
+		return objs;
+	}
 
 	/**
 	 * using given objs as a template create their clones and overwrite values of provided fieldValues
