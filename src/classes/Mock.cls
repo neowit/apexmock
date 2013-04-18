@@ -88,6 +88,9 @@ public with sharing class Mock {
 		if (saveIntoDb) {
 			try {
 				Database.insert(obj);
+				if (MOCK_DATA.isSingletonObjectType(objApiName)) {
+					SINGLETONS.put(objApiName, obj);
+				}
 			} catch (Exception e) {
 				String msg = 'Mock.one:: failed to insert ' + objApiName + ' with provided fieldValues:' +  fieldValues + ' and populated fields:' 
 							+ obj + '. Original exception: ' + e.getMessage();
@@ -336,6 +339,10 @@ public with sharing class Mock {
 		return val.replaceAll('#\\{'+functionName+'\\}', value);
 	}
 	
+	//Singleton objects, defined by MOCK_DATA.isSingletonObjectType() recorded here
+	//Object-Type => SObject
+	private static final Map<String, SObject> SINGLETONS = new Map<String, SObject>();
+	
 	/**
 	 *	DEPENDS_ON defines what fields require other object to be created before current object can be saved
 	 *	...
@@ -353,8 +360,16 @@ public with sharing class Mock {
 			for (String fName : dependsOn.keySet()) {
 				if (null == obj.get(fName) && !recordByFieldName.containsKey(fName)) {//no need to create a parent record for the same field twice
 					String objType = (String)dependsOn.get(fName);
-					//init object from standard fixtures and Save
-					SObject relatedObj = (SObject)Mock.one(objType, true);
+					SObject relatedObj;
+					
+					Boolean isSingletonType = MOCK_DATA.isSingletonObjectType(objType);
+					if (isSingletonType) {
+						relatedObj = SINGLETONS.get(objType);
+					}
+					if (null == relatedObj) {
+						//init object from standard fixtures and Save
+						relatedObj = (SObject)Mock.one(objType, true);
+					}
 					recordByFieldName.put(fName, relatedObj);
 				}
 			}

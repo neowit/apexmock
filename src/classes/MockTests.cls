@@ -181,5 +181,52 @@ public with sharing class MockTests {
 		
 		
 	}
+
+	/**
+	 * check how Singleton functionality works
+	 */
+	static testMethod void testSingletons () {
+		Mock.MOCK_DATA = new TestMockData();
+		//first check that if parent/depends_on object is not singleton then we create 1 per every record
+		try	{
+
+			List<Contact> conts = Mock.many('Contact', 2, false); 
+			//check if AccountId from standard fixture is initialised
+			System.assertNotEquals(null, conts[0].AccountId,'Expected AccountId to be initialised as defined in MockDataStandard.CONTACT_VALUES[DEPENDS_ON]');
+			System.assertNotEquals(conts[0].AccountId, conts[1].AccountId,'Expected AccountId-s to be different');
+
+			Contact cont3 = (Contact)Mock.one('Contact', false); 
+			System.assertNotEquals(conts[0].AccountId, cont3.AccountId ,'Expected AccountId-s to be different yet again');
+			
+		} catch (Exception eIgnore) {}
+
+		//now declare Account type Singleton and check that there is just single record is created
+		Mock.MOCK_DATA.addSingletonObjectType('Account');
+		try	{
+
+			List<Contact> conts = Mock.many('Contact', 2, false); 
+			//check if AccountId from standard fixture is initialised
+			System.assertNotEquals(null, conts[0].AccountId,'Expected AccountId to be initialised as defined in MockDataStandard.CONTACT_VALUES[DEPENDS_ON]');
+			System.assertEquals(conts[0].AccountId, conts[1].AccountId,'Expected AccountId-s to be the same');
+
+			Contact cont3 = (Contact)Mock.one('Contact', false); 
+			System.assertEquals(conts[0].AccountId, cont3.AccountId ,'Expected AccountId-s to be still the same');
+			
+		} catch (Exception eIgnore) {}
+
+		//when we remove singleton type system shall revert back to creating one record per child
+		Mock.MOCK_DATA.removeSingletonObjectType('Account');
+		try	{
+
+			List<Contact> conts = Mock.many('Contact', 2, false); 
+			//check if AccountId from standard fixture is initialised
+			System.assertNotEquals(null, conts[0].AccountId,'Expected AccountId to be initialised as defined in MockDataStandard.CONTACT_VALUES[DEPENDS_ON]');
+			System.assertNotEquals(conts[0].AccountId, conts[1].AccountId,'Expected AccountId-s to be different');
+			
+		} catch (Exception eIgnore) {}
+
+		
+	}
+	
 	
 }

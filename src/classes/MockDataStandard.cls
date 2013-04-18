@@ -102,6 +102,26 @@ public with sharing abstract class MockDataStandard {
 	public abstract Map<String, Object> getValueMap(final String objApiName, final Map<String, Object> fieldValues);
 
 
+	private final Set<String> SINGLETON_OBJECT_TYPES = new Set<String>();
+	/**
+	 * some MockData definitions have DEPENDS_ON which causes listed Parent object to be created automatically - 
+	 * one Parent per every child created.
+	 * However, in some cases we do not need more than 1 record of certain object type (e.g. configuration objects)
+	 * Methods isSingletonObjectType(), addSingletonObjectType() and removeSingletonObjectType() allow to solve this problem
+	 * It may be good idea to do singleton types initialisation in your custom MockDataXX classes
+	 * Singletons can also be initialised as needed in the individual test methods, see MockTests.testSingletons()
+	 */
+	public virtual Boolean isSingletonObjectType(final String objectApiName) {
+		return SINGLETON_OBJECT_TYPES.contains(objectApiName);
+	}
+	
+	public virtual void addSingletonObjectType(final String objectApiName) {
+		SINGLETON_OBJECT_TYPES.add(objectApiName);
+	}
+	public virtual void removeSingletonObjectType(final String objectApiName) {
+		SINGLETON_OBJECT_TYPES.remove(objectApiName);
+	}
+
 	/**
 	 * main purpose of this method is to make sure that we return a copy of Fixture data rather than reference
 	 * so any changes to the result returned by getDefaultValues() will not affect fixtures
