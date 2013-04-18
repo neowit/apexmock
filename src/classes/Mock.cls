@@ -86,7 +86,13 @@ public with sharing class Mock {
 		populateFieldValues(obj, fieldValues);
 
 		if (saveIntoDb) {
-			Database.insert(obj);
+			try {
+				Database.insert(obj);
+			} catch (Exception e) {
+				String msg = 'Mock.one:: failed to insert ' + objApiName + ' with provided fieldValues:' +  fieldValues + ' and populated fields:' 
+							+ obj + '. Original exception: ' + e.getMessage();
+				System.assert(false, msg);
+			}
 		}
 		return obj;
 	}
