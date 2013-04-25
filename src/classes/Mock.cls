@@ -368,7 +368,9 @@ public with sharing class Mock {
 					}
 					if (null == relatedObj) {
 						//init object from standard fixtures and Save
-						relatedObj = (SObject)Mock.one(objType, true);
+						relatedObj = (SObject)Mock.one(objType, true);  //it is important to save HERE as opposed to all in one go outside of the cycle
+																		//because part of the Mock.one(..., SAVE) is initialisation of singleton so next
+																		//time we come to this line we may have existing singleton
 					}
 					recordByFieldName.put(fName, relatedObj);
 				}
