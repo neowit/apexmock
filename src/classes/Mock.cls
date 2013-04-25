@@ -357,6 +357,8 @@ public with sharing class Mock {
 
 		if (null != dependsOn) {
 		
+			final List<SObject> objsToInsert = new List<SObject>();
+			
 			for (String fName : dependsOn.keySet()) {
 				if (null == obj.get(fName) && !recordByFieldName.containsKey(fName)) {//no need to create a parent record for the same field twice
 					String objType = (String)dependsOn.get(fName);
@@ -368,13 +370,18 @@ public with sharing class Mock {
 					}
 					if (null == relatedObj) {
 						//init object from standard fixtures and Save
-						relatedObj = (SObject)Mock.one(objType, true);  //it is important to save HERE as opposed to all in one go outside of the cycle
+						relatedObj = (SObject)Mock.one(objType, false);  //it is important to save HERE as opposed to all in one go outside of the cycle
 																		//because part of the Mock.one(..., SAVE) is initialisation of singleton so next
 																		//time we come to this line we may have existing singleton
+						if (MOCK_DATA.isSingletonObjectType(objType)) {
+							SINGLETONS.put(objType, relatedObj);
+						}
+						objsToInsert.add(relatedObj);
 					}
 					recordByFieldName.put(fName, relatedObj);
 				}
 			}
+			Database.insert(objsToInsert);
 		}
 
 		return recordByFieldName;
