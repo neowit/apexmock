@@ -20,7 +20,8 @@ public with sharing class MockData extends MockDataStandard {
 	//EXAMPLE
 	//public static Map<String, Object> ACCOUNT_VALUES = new Map<String, Object> {
 	//	'Name' => 'My New Acount Name Value#{COUNTER}',//override Name definition specified in MockDataStandard
-	//	'My_Field__c' => 5 //add definition for a custom field
+	//	'My_Field__c' => 5, //add definition for a custom field
+	//	Mock.DEPENDS_ON => new Map<String, String>{'AccountId' => 'Account'} //add dependency on parent/related object
 	//};
 	
 

@@ -54,7 +54,7 @@ public with sharing class Mock {
 
 		}
 	}
-	private static Map<String, Schema.SObjectType> gd = Schema.getGlobalDescribe();
+	private static Map<String, Schema.SObjectType> GLOBAL_DESCRIBE = Schema.getGlobalDescribe();
 	
 
 	/**
@@ -91,6 +91,7 @@ public with sharing class Mock {
 				if (MOCK_DATA.isSingletonObjectType(objApiName)) {
 					SINGLETONS.put(objApiName, obj);
 				}
+				recordLookups(obj);
 			} catch (Exception e) {
 				String msg = 'Mock.one:: failed to insert ' + objApiName + ' with provided fieldValues:' +  fieldValues + ' and populated fields:' 
 							+ obj + '. Original exception: ' + e.getMessage();
@@ -125,6 +126,7 @@ public with sharing class Mock {
 		}
 		if (saveIntoDb) {
 			Database.insert(objs);
+			recordLookups(objs);
 		}
 		return objs;
 		
@@ -169,6 +171,7 @@ public with sharing class Mock {
 		}
 		if (saveIntoDb) {
 			Database.insert(objs);
+			recordLookups(objs);
 		}
 		return objs;
 	}
@@ -188,6 +191,7 @@ public with sharing class Mock {
 		}
 		if (saveIntoDb) {
 			Database.insert(objClones);
+			recordLookups(objClones);
 		}
 		return objClones;
 	}
@@ -271,7 +275,47 @@ public with sharing class Mock {
 
 	}
 
+	/**
+	 * just a convenience method, details @see in MockDataStandard.getRelationship()
+	 */
+	public static Id getRelationship(final SObject sobj, final String path) {
+		System.assertNotEquals(null, MOCK_DATA, 'Mock.MOCK_DATA is not initialised');
+		return MOCK_DATA.getRelationship(sobj, path);
+	}
 	//////////////////////////////////////////////////////////////////////////////////////////////////
+	/**
+	 * for each field that looks like Id lookup record value in relationshipsMap
+	 */
+	private static void recordLookups(final List<SObject> sobjs) {
+		for (SObject sobj : sobjs) {
+			recordLookups(sobj);
+		}
+	}
+	private static void recordLookups(final SObject sobj) {
+		final Map<Id, Map<String, Id>> relationshipsMap = MOCK_DATA.getRelationshipsMap();
+		System.assertNotEquals(null, relationshipsMap, 'Mock.MOCK_DATA is not initialised');
+
+		final Id sobjectId = (Id)sobj.get('id');
+		Map<String, Id> lookupMap = relationshipsMap.get(sobjectId);
+		if (null == lookupMap) {
+			lookupMap = new Map<String, Id>();
+			relationshipsMap.put(sobjectId, lookupMap);
+		}
+		String objApiName = String.valueOf(sobj.getSObjectType());
+		final Map<String, Schema.SObjectField> fieldMap = getFieldMap(objApiName);
+		for (String fName : fieldMap.keySet()) {
+			fName = fName.toLowerCase();
+			Object val = sobj.get(fName);
+			if (null != val && 'id' != fName) {
+				if (val instanceof Id) {
+					try {//NOTE this test witn API < 27.0 returns false positives for strings, so have to use try/catch just in case
+						lookupMap.put(fName, (Id)val);
+					} catch (Exception eIgnore) {}
+				}
+			}
+		}
+	}
+	
 	private static SObject populateFieldValues(SObject obj, final Map<String, Object> fieldValues) {
 		System.assert(null != fieldValues, 'param fieldValues must not be null.');
 		//check if given objApiName is supported
@@ -312,14 +356,14 @@ public with sharing class Mock {
 	}
 
 	private static sObject createObject(String typeName) {
-		Schema.SObjectType targetType = gd.get(typeName);
+		Schema.SObjectType targetType = GLOBAL_DESCRIBE.get(typeName);
 		System.assertNotEquals(null, targetType, 'Failed to get Describe for type: ' + typeName);
 		
 		// Instantiate an sObject with the type passed in as an argument at run time.
 		return targetType.newSObject();
 	}
 	private static Map<String, Schema.SObjectField> getFieldMap(String typeName) {
-		Schema.SObjectType targetType = gd.get(typeName);
+		Schema.SObjectType targetType = GLOBAL_DESCRIBE.get(typeName);
 		System.assertNotEquals(null, targetType, 'Failed to get Describe for type: ' + typeName);
 		return targetType.getDescribe().fields.getMap();
 	}
@@ -382,11 +426,10 @@ public with sharing class Mock {
 				}
 			}
 			Database.insert(objsToInsert);
+			recordLookups(objsToInsert);
 		}
 
 		return recordByFieldName;
-		
-
 	}
 
 	/**

@@ -101,6 +101,59 @@ public with sharing abstract class MockDataStandard {
 	 */
 	public abstract Map<String, Object> getValueMap(final String objApiName, final Map<String, Object> fieldValues);
 
+	//in relationshipsMap we record lookup values in order to be able to do 
+	private final Map<Id, Map<String, Id>> relationshipsMap = new Map<Id, Map<String, Id>>();//Object.Id -> Map (Lookup_Field_Name -> Object.Id)
+	public Map<Id, Map<String, Id>> getRelationshipsMap() {
+		return relationshipsMap;
+	}
+	/**
+	 * @param: path - full path through relationships
+	 * let assume we have a hierarchy 
+	 * Parent
+	 * -- Child_1 (has lookup Parent__c)
+	 * ----- Child_of_Child (has lookup Child_1__c)
+	 * then if we have a record id of Child_of_Child then in order to get to Parent.Id we can do this
+	 *	  Id parentId = getRelationship(childOfChildId, 'Child_1__c. Parent__c')
+	 */
+	public Id getRelationship(final SObject sobj, final String path) {
+		System.assert(!String.isBlank(path), 'Field path must not be blank');
+		System.assert(path.indexOf('.') > 0, 'Field path must look like a dot separated sequence: Field_1__c.Parent_Field_2__c.Grand_Parent_Field_3__c...');
+
+		Id objId = (Id)sobj.get('Id');
+		String pathStr = path;
+		if (null == objId) {
+			//this object has not yet been saved, so we can not use relationshipsMap straight away
+			//get first field
+			String fName = path.split('\\.')[0];
+			objId = (Id)sobj.get(fName);
+			Integer nextFieldIndex = fName.length() + 1;
+			pathStr = path.substring(nextFieldIndex );//remove first field from the path
+		}
+		if (null == objId) {
+			return null;
+		}
+
+		return getRelationship(objId, pathStr);
+	}
+
+	public Id getRelationship(final Id sobjectId, final String path) {
+		System.assert(!String.isBlank(path), 'Field path must not be blank and must look like a dot separated sequence: Field_1__c.Parent_Field_2__c.Grand_Parent_Field_3__c...');
+
+		Id sobjId = sobjectId;
+		
+		for (String fName : path.toLowerCase().split('\\.')) {
+			Map<String, Id> lookupMap = relationshipsMap.get(sobjId);
+			if (null == lookupMap) {
+				return null;//failed to traverse object id via relationship lookups
+			}
+			Id parentId = lookupMap.get(fName);
+			if (null == parentId) {
+				return null;//failed to traverse object id via relationship lookups
+			}
+			sobjId = parentId;
+		}
+		return sobjId;
+	}
 
 	private final Set<String> SINGLETON_OBJECT_TYPES = new Set<String>();
 	/**

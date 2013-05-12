@@ -227,6 +227,33 @@ public with sharing class MockTests {
 
 		
 	}
+	/**
+	 * check how ewlationship lookup recording and retrieval works
+	 * @see: Mock.getRelationship() & MockDataStandard.getRelationship()
+	 */
+	static testMethod void testRelationshipLookups () {
+		//first check non existing relationship
+		System.assertEquals(null, Mock.MOCK_DATA.getRelationship('001000000000000', 'WhoId.AcountId'), 'Expected blank relationship');
+		
+		//there is a good chance that target Org has required fields that are not initated in standard fixtures
+		//so using try..catch to avoid failing tests
+		try	{
+
+			//as we do not know the target Org schema we can not rely on any particular object hierarchy, but let's try 3 level:
+			//Account <- Contact <- Event
+			Contact cont = (Contact)Mock.one('Contact', true); 
+			//check one level
+			System.assertEquals(cont.AccountId, Mock.MOCK_DATA.getRelationship(cont.Id, 'AccountId'), 'Expected AccountId to be with the same value as cont.AccountId');
+
+			Event evt = (Event)Mock.one('Event', new Map<String, Object>{'WhoId' => cont.Id}, false); 
+			Id accountId = Mock.getRelationship(evt, 'WhoId.AccountId');
+			//check if AccountId from standard fixture is initialised
+			System.assertEquals(cont.AccountId, accountId, 'Expected accountId to be with the same value as contact.AccountId');
+			
+		} catch (Exception eIgnore) {}
+		
+	}
+	
 	
 	
 }
