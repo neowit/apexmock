@@ -46,16 +46,16 @@ public with sharing class Mock {
 													//see MockTests.cls for examples
 	public static String DEPENDS_ON = 'depends_on';
 
+	private static Map<String, Schema.SObjectType> GLOBAL_DESCRIBE = Schema.getGlobalDescribe();
+
 	static {
 		//if there is MockData then instantiate it
 		Type t = Type.forName('MockData');
 		if (null != t) {
 			MOCK_DATA = (MockDataStandard)t.newInstance();
-
+			System.assert(MOCK_DATA.init(), 'MockData initialisation failed');
 		}
 	}
-	private static Map<String, Schema.SObjectType> GLOBAL_DESCRIBE = Schema.getGlobalDescribe();
-	
 
 	/**
 	 * use this if Database.insert is not required
@@ -83,7 +83,7 @@ public with sharing class Mock {
 
 		//instantiate SObject
 		SObject obj = createObject(objApiName);
-		populateFieldValues(obj, fieldValues);
+		populateFieldValues(objApiName, obj, fieldValues);
 
 		if (saveIntoDb) {
 			try {
@@ -317,9 +317,17 @@ public with sharing class Mock {
 	}
 	
 	private static SObject populateFieldValues(SObject obj, final Map<String, Object> fieldValues) {
+		String objApiName = String.valueOf(obj.getSObjectType());
+		return populateFieldValues(objApiName, obj, fieldValues);
+	}
+
+	/**
+	 * objApiName - can be a customised type, e.g. Account#Customer
+	 */
+	private static SObject populateFieldValues(String objApiName, SObject obj, final Map<String, Object> fieldValues) {
 		System.assert(null != fieldValues, 'param fieldValues must not be null.');
 		//check if given objApiName is supported
-		String objApiName = String.valueOf(obj.getSObjectType());
+		//String objApiName = String.valueOf(obj.getSObjectType());
 		System.assert(null != MOCK_DATA, 'Mock.MOCK_DATA is not initialised. Assign your data fixture to Mock.MOCK_DATA first.');
 		final Map<String, Object> fieldValuesInternal = toLowerCaseMap(fieldValues);
 		Map<String, Object> defaultValues = toLowerCaseMap(MOCK_DATA.getDefaultValues(objApiName, fieldValuesInternal));
@@ -356,12 +364,22 @@ public with sharing class Mock {
 	}
 
 	private static sObject createObject(String typeName) {
-		Schema.SObjectType targetType = GLOBAL_DESCRIBE.get(typeName);
-		System.assertNotEquals(null, targetType, 'Failed to get Describe for type: ' + typeName);
+		String realTypeName = extractTypeName(typeName);
+		Schema.SObjectType targetType = GLOBAL_DESCRIBE.get(realTypeName);
+		System.assertNotEquals(null, targetType, 'Failed to get Describe for type: ' + realTypeName);
 		
 		// Instantiate an sObject with the type passed in as an argument at run time.
 		return targetType.newSObject();
 	}
+	/**
+	 * extract type name from potentially complex type string
+	 * e.g. Account#Customer - is Account with Customer specific fields
+	 * so real type here is Account
+	 */
+	private static String extractTypeName(String typeName) {
+		return typeName.split('#')[0];
+	}
+
 	private static Map<String, Schema.SObjectField> getFieldMap(String typeName) {
 		Schema.SObjectType targetType = GLOBAL_DESCRIBE.get(typeName);
 		System.assertNotEquals(null, targetType, 'Failed to get Describe for type: ' + typeName);

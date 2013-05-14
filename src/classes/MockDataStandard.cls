@@ -100,6 +100,14 @@ public with sharing abstract class MockDataStandard {
 	 * e.g. return different data sets depending on RecordTypeId
 	 */
 	public abstract Map<String, Object> getValueMap(final String objApiName, final Map<String, Object> fieldValues);
+	/**
+	 * any data initialisation (e.g. pre-defined data creation) can be done here
+	 * if your fixture class is not called MockData and not assigned automatically inside Mock class
+	 * then if you implement init() you will have to call it manually, like so
+	 * Mock.MOCK_DATA = MyData();
+	 * Mock.MOCK_DATA.init();
+	 */ 
+	public virtual Boolean init() { return true; }
 
 	//in relationshipsMap we record lookup values in order to be able to do 
 	private final Map<Id, Map<String, Id>> relationshipsMap = new Map<Id, Map<String, Id>>();//Object.Id -> Map (Lookup_Field_Name -> Object.Id)
@@ -165,14 +173,14 @@ public with sharing abstract class MockDataStandard {
 	 * Singletons can also be initialised as needed in the individual test methods, see MockTests.testSingletons()
 	 */
 	public virtual Boolean isSingletonObjectType(final String objectApiName) {
-		return SINGLETON_OBJECT_TYPES.contains(objectApiName);
+		return SINGLETON_OBJECT_TYPES.contains(objectApiName.toLowerCase());
 	}
 	
 	public virtual void addSingletonObjectType(final String objectApiName) {
-		SINGLETON_OBJECT_TYPES.add(objectApiName);
+		SINGLETON_OBJECT_TYPES.add(objectApiName.toLowerCase());
 	}
 	public virtual void removeSingletonObjectType(final String objectApiName) {
-		SINGLETON_OBJECT_TYPES.remove(objectApiName);
+		SINGLETON_OBJECT_TYPES.remove(objectApiName.toLowerCase());
 	}
 
 	/**

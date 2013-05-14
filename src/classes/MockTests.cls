@@ -28,6 +28,11 @@ public with sharing class MockTests {
 		'Name' => 'Alternate-Name',
 		'BillingStreet' => 'mock test street'
 	};
+	private static Map<String, Object> ACCOUNT_CUSTOMER_VALUES = new Map<String, Object> {
+		'Name' => 'Customer-Name',
+		'BillingStreet' => 'mock customer street'
+	};
+
 	class TestMockData extends MockDataStandard {
 		/**
 		 * return specific field values for account
@@ -35,6 +40,7 @@ public with sharing class MockTests {
 		public override Map<String, Object> getValueMap(final String objApiName, final Map<String, Object> fieldValues) {
 			final Map<String, Map<String, Object>> DEFAULT_VALUES_BY_TYPE = new Map<String, Map<String, Object>>();
 			DEFAULT_VALUES_BY_TYPE.put('Account', ACCOUNT_VALUES);
+			DEFAULT_VALUES_BY_TYPE.put('Account#Customer', ACCOUNT_CUSTOMER_VALUES);
 			return DEFAULT_VALUES_BY_TYPE.get(objApiName);
 		}
 	}
@@ -228,7 +234,7 @@ public with sharing class MockTests {
 		
 	}
 	/**
-	 * check how ewlationship lookup recording and retrieval works
+	 * check how relationship lookup recording and retrieval works
 	 * @see: Mock.getRelationship() & MockDataStandard.getRelationship()
 	 */
 	static testMethod void testRelationshipLookups () {
@@ -254,6 +260,21 @@ public with sharing class MockTests {
 		
 	}
 	
+	/**
+	 * check complex types like Account, Account#Customer and Account#Partner
+	 */
+	static testMethod void testCustomisedTypes () {
+		Mock.MOCK_DATA = new TestMockData();
+		//as we do not know the target Org schema we can not rely on any particular object hierarchy, but let's try 3 level:
+		//Account <- Contact <- Event
+		Account accGeneric = (Account)Mock.one('Account', false); 
+		Account accCustomised = (Account)Mock.one('Account#Customer', false); 
+		//check that Cusotmer and Generic have been initialised with different values
+		System.assertNotEquals(accGeneric.Name, accCustomised.Name, 'Expected different values for two accounts');
+		System.assertEquals(ACCOUNT_VALUES.get('Name'), accGeneric.Name, 'Expected Account.Name to be with the same as in ACCOUNT_VALUES fixture');
+		System.assertEquals(ACCOUNT_CUSTOMER_VALUES.get('Name'), accCustomised.Name, 'Expected Account.Name to be with the same as in ACCOUNT_CUSTOMER_VALUES fixture');
+		
+	}
 	
 	
 }
