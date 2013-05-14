@@ -43,12 +43,12 @@ public with sharing class MockUtils {
 	 * @return - record type if found, null otherwise
 	 */
 	public static RecordType getRecordType(String objectApiName, String rtDeveloperName) {
-		String key = objectApiName + '.' + rtDeveloperName;
+		String key = (objectApiName + '.' + rtDeveloperName).toLowerCase();
 		RecordType recType = recordTypeByObjectAndName.get(key);
 		if (null == recType) {
 			for(RecordType rt : [select Id, DeveloperName, SobjectType from RecordType where SobjectType =: objectApiName]) {
 				String rtNameKey = rt.SobjectType + '.' + rt.DeveloperName;
-				recordTypeByObjectAndName.put(rtNameKey, rt);
+				recordTypeByObjectAndName.put(rtNameKey.toLowerCase(), rt);
 			}
 			recType = recordTypeByObjectAndName.get(key);
 		}

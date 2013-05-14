@@ -202,10 +202,11 @@ public with sharing class Mock {
 	 */
 	public static SObject populateNulls(final SObject obj) {
 		String objApiName = getObjectApiName(obj);
+		String realObjApiName = extractTypeName(objApiName);
 		final Map<String, Object> defaultValues = MOCK_DATA.getDefaultValues(objApiName,  new Map<String, Object>());
 		for (String fName : defaultValues.keySet()) {
 			if (null == obj.get(fName)) {
-				obj.put(fName, mergeValue(defaultValues.get(fName)));
+				obj.put(fName, mergeValue(realObjApiName, fName, defaultValues.get(fName)));
 			}
 		}
 		return obj;
@@ -216,6 +217,9 @@ public with sharing class Mock {
 	 * if value is of type string and contains #{function} then apply that functions
 	 */
 	public static Object mergeValue(final Object val) {
+		return mergeValue(null, null, val);
+	}
+	public static Object mergeValue(final String realObjectApiName, final String fName, final Object val) {
 		Object resVal = val;
 		if (null != val && val instanceof String) {
 			String strVal = (String)val;
@@ -229,6 +233,17 @@ public with sharing class Mock {
 				if (containsFunction(strVal, 'COUNTER')) {
 					UNIQUE_COUNTER++;
 					strVal = (String)setFunctionValue(strVal, 'COUNTER', '' + UNIQUE_COUNTER);
+				}
+				if ('RecordTypeId' == fName && null != realObjectApiName) {
+					//see if given value is of type Id
+					try {
+						Id rtId = (Id)val;
+					} catch (Exception eOk) {
+						//given value is not id, so assume this is Developer Name of a record type on given object type
+						RecordType rt = MockUtils.getRecordType(realObjectApiName, (String)val);
+						System.assertNotEquals(null, rt, 'Record Type with Developer Name "' + val + '" not found on object type=' + realObjectApiName);
+						strVal = rt.Id;
+					}
 				}
 				resVal = strVal;
 			}
@@ -327,18 +342,19 @@ public with sharing class Mock {
 	private static SObject populateFieldValues(String objApiName, SObject obj, final Map<String, Object> fieldValues) {
 		System.assert(null != fieldValues, 'param fieldValues must not be null.');
 		//check if given objApiName is supported
-		//String objApiName = String.valueOf(obj.getSObjectType());
 		System.assert(null != MOCK_DATA, 'Mock.MOCK_DATA is not initialised. Assign your data fixture to Mock.MOCK_DATA first.');
 		final Map<String, Object> fieldValuesInternal = toLowerCaseMap(fieldValues);
 		Map<String, Object> defaultValues = toLowerCaseMap(MOCK_DATA.getDefaultValues(objApiName, fieldValuesInternal));
 		System.assert(null != defaultValues,'Mock Data for type ' + objApiName + ' is not defined. Define data first.');
+		String realObjApiName = extractTypeName(objApiName);
+
 		
 
 		//assign provided fields
 		for (String fName : fieldValuesInternal.keySet()) {
 			//single value
 			if (DEPENDS_ON != fName) {
-				obj.put(fName, mergeValue(fieldValuesInternal.get(fName)));
+				obj.put(fName, mergeValue(realObjApiName, fName, fieldValuesInternal.get(fName)));
 				defaultValues.remove(fName);//remove provided field from default values map
 			}
 		}
@@ -347,7 +363,7 @@ public with sharing class Mock {
 		for (String fName : defaultValues.keySet()) {
 			//single value
 			if (DEPENDS_ON != fName) {
-				obj.put(fName, mergeValue(defaultValues.get(fName)));
+				obj.put(fName, mergeValue(realObjApiName, fName, defaultValues.get(fName)));
 			}
 		}
 

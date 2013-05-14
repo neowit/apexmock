@@ -275,6 +275,18 @@ public with sharing class MockTests {
 		System.assertEquals(ACCOUNT_CUSTOMER_VALUES.get('Name'), accCustomised.Name, 'Expected Account.Name to be with the same as in ACCOUNT_CUSTOMER_VALUES fixture');
 		
 	}
+	/**
+	 * check record type substitution
+	 */
+	static testMethod void testRecordTypeSubstitution () {
+		//this test only makes sence if there are record types in the org
+		final List<RecordType> rts = [select Id, DeveloperName, SobjectType from RecordType limit 1];
+		
+		if (!rts.isEmpty()) {
+			Id rtId = (Id)Mock.mergeValue(String.valueOf(rts[0].SobjectType), 'RecordTypeId', rts[0].DeveloperName);
+			System.assertNotEquals(null, rtId, 'Expected Record Type Id to be initialised based on provided Record Type Developer Name');
+		}
+	}
 	
 	
 }
