@@ -115,8 +115,8 @@ public with sharing class Mock {
 				if (fieldValues.get(fName) instanceof List<Object>) {
 					//array of values
 					List<Object> values = (List<Object>)fieldValues.get(fName);
-					System.assert(values.size() > i,'Index ' + i + ' is too large for provided list of values of field ' + fName);
-					oneRecordValues.put(fName, values[i]);
+					//if count is higher than values.size() then we just wrap values around using Math.mod
+					oneRecordValues.put(fName, values[Math.mod(i, values.size())]);
 				} else {
 					//single value
 					oneRecordValues.put(fName, fieldValues.get(fName));
