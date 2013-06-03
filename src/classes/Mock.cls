@@ -205,7 +205,7 @@ public with sharing class Mock {
 		String realObjApiName = extractTypeName(objApiName);
 		final Map<String, Object> defaultValues = MOCK_DATA.getDefaultValues(objApiName,  new Map<String, Object>());
 		for (String fName : defaultValues.keySet()) {
-			if (null == obj.get(fName)) {
+			if (DEPENDS_ON != fName && null == obj.get(fName)) {
 				obj.put(fName, mergeValue(realObjApiName, fName, defaultValues.get(fName)));
 			}
 		}
