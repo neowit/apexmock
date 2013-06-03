@@ -24,17 +24,19 @@
 public with sharing class MockUtils {
 	final static Map<String, RecordType> recordTypeByObjectAndName = new Map<String, RecordType>();//Account.Small_Business -> RecordType
 	
-	final static Map<String, Profile> profileMap = new Map<String, Profile>();
+	final static Map<String, Map<String, SObject>> sobjectCache = new Map<String, Map<String, SObject>>();
 	
 	public static Profile getProfile(final String profileName) {
-		Profile prof = profileMap.get(profileName);
-		if (null == prof) {
-			//in theory we shall do try/catch here, but missing profile usually means either Typo or something really bad
-			//so nice handling of such situation is not necessary
-			prof = [select Id, Name from Profile where name =: profileName];
-			profileMap.put(prof.Name, prof);
-		}
+		Map<String, SObject> cachedMap = loadCache('Profile', 'name', new List<String> {profileName}, new Set<String>{'name'});
+		Profile prof = (Profile)cachedMap.get(profileName);
+		System.assertNotEquals(null, prof, 'Profile with name ' + profileName + ' not found');
 		return prof;
+	}
+
+	public static UserRole getRole(final String roleDeveloperName) {
+		UserRole role = (UserRole)loadCache('UserRole', 'DeveloperName', roleDeveloperName ).get(roleDeveloperName);
+		System.assertNotEquals(null, role, 'UserRole with DeveloperName ' + roleDeveloperName + ' not found');
+		return role;
 	}
 
 	/**
@@ -53,6 +55,48 @@ public with sharing class MockUtils {
 			recType = recordTypeByObjectAndName.get(key);
 		}
 		return recType;
+	}
+
+	public static Map<String, SObject> loadCache(final String objApiName, final String keyFieldName, final String keyVal) {
+		return loadCache(objApiName, keyFieldName, new List<String>{keyVal}, new Set<String>() );
+	}
+	/**
+	 * cache specific records for subsequent use in cals like getProfile, getRole, etc
+	 */
+	public static Map<String, SObject> loadCache(final String objApiName, final String keyFieldName, final List<String> keyVals, final Set<String> fieldsToCache) {
+		String objApiNameLower = objApiName.toLowerCase();
+		Map<String, SObject> resultMap = new Map<String, SObject>();
+		Map<String, SObject> cachedMap = sobjectCache.get(objApiNameLower);
+		if (null == cachedMap) {
+			cachedMap = new Map<String, SObject>();
+			sobjectCache.put(objApiNameLower, cachedMap);
+		}
+		final Set<String> keysToLoad = new Set<String>();
+
+		for(String key : keyVals) {
+			SObject objLoaded = cachedMap.get(key);
+			if (null == objLoaded) {
+				keysToLoad.add(key);
+			} else {
+				resultMap.put(key, objLoaded);
+			}
+		}
+		
+		if (!keysToLoad.isEmpty()) {
+			String soqlStr = 'select Id, ' + keyFieldName;
+			for(String fName : fieldsToCache) {
+				if (!'id'.equalsIgnoreCase(fName) && !keyFieldName.equalsIgnoreCase(fName)) {
+					soqlStr += ',' + fName;
+				}
+			}
+			soqlStr += ' from ' + objApiName + ' where ' + keyFieldName + ' in: keysToLoad';
+
+			for( SObject obj : Database.query(soqlStr)) {
+				resultMap.put((String)obj.get(keyFieldName), obj);
+			}
+			cachedMap.putAll(resultMap);
+		}
+		return resultMap;
 	}
 
 	/**
@@ -82,4 +126,19 @@ public with sharing class MockUtils {
 		System.assertEquals(rtExpectedId, rtLoadedId, 'did not find RecordType which was expected');
 	}
 
+	/**
+	 * check how getRole method works
+	 */
+	static testMethod void testGetRole () {
+		try {
+			UserRole existingRole = [select Id, DeveloperName from UserRole limit 1];
+			//every org has System Administrator profile so we can reliably test that it exists
+			System.assertEquals(existingRole.Id, MockUtils.getRole(existingRole.DeveloperName).Id, 
+					'Expected to return Id of existing role' + existingRole.DeveloperName);
+			//call same method again, but now expect to return value from cache
+			System.assertEquals(existingRole.Id, MockUtils.getRole(existingRole.DeveloperName).Id, 
+					'Expected to return Id of existing role' + existingRole.DeveloperName);
+
+		} catch (Exception eIgnore) {}
+	}
 }
