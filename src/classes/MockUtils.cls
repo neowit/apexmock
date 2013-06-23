@@ -48,7 +48,7 @@ public with sharing class MockUtils {
 		String key = (objectApiName + '.' + rtDeveloperName).toLowerCase();
 		RecordType recType = recordTypeByObjectAndName.get(key);
 		if (null == recType) {
-			for(RecordType rt : [select Id, DeveloperName, SobjectType from RecordType where SobjectType =: objectApiName]) {
+			for(RecordType rt : [select Id, DeveloperName, SobjectType, Name from RecordType where SobjectType =: objectApiName]) {
 				String rtNameKey = rt.SobjectType + '.' + rt.DeveloperName;
 				recordTypeByObjectAndName.put(rtNameKey.toLowerCase(), rt);
 			}
