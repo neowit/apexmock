@@ -57,6 +57,8 @@ public with sharing class Mock {
 		}
 	}
 
+	public class InsertException extends Exception {}
+
 	/**
 	 * use this if Database.insert is not required
 	 */
@@ -95,8 +97,9 @@ public with sharing class Mock {
 			} catch (Exception e) {
 				String msg = 'Mock.one:: failed to insert ' + objApiName + ' with provided fieldValues:' +  fieldValues + ' and populated fields:' 
 							+ obj + '. Original exception: ' + e.getMessage() + ' ' + e.getStackTraceString();
-				//TODO - assert results are not fully shown in Deploy - consider alternative, e.g. throw Exception instead of assert
-				System.assert(false, msg);
+				throw new InsertException(msg, e);
+				//assert results are not fully shown in Deploy
+				//System.assert(false, msg);
 			}
 		}
 		return obj;
