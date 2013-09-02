@@ -288,5 +288,22 @@ public with sharing class MockTests {
 		}
 	}
 	
+	/**
+	 * WARNING: Slow test
+	 * This test may cause detrimental effect on deployment speed in Orgs with lots of triggers on Account
+	 * you may want to delete it to avoid wasting time during normal deployments
+	 *
+	 * Test bulk create of > 100 records
+	 * check that we are not hitting any Limit related problems
+	 */
+	static testMethod void testBulkCreate () {
+		//there is a good chance that target Org has required fields that are not initated in standard fixtures
+		//so using try..catch to avoid failing tests
+		//however, if there is a Limit exception (e.g. System.LimitException) it will escape catch() below
+		try	{
+			List<Account> accs = Mock.many('Account', new Map<String, Object>{'Name' => 'TestAccc${COUNTER}'}, 300, true); 
+		} catch (Exception eIgnore) {}
+
+	}
 	
 }

@@ -47,6 +47,7 @@ public with sharing class Mock {
 	public static String DEPENDS_ON = 'depends_on';
 
 	private static Map<String, Schema.SObjectType> GLOBAL_DESCRIBE = Schema.getGlobalDescribe();
+	private static Map<String, List<String>> fieldNamesByObjectType = new Map<String, List<String>>();
 
 	static {
 		//if there is MockData then instantiate it
@@ -156,11 +157,11 @@ public with sharing class Mock {
 	 */
 	public static List<SObject> many(final SObject objTemplate, final Integer count, final Boolean saveIntoDb) {
 		//figure out what fields user has initialised
-		String objApiName = getObjectApiName(objTemplate);
-		Map<String, Schema.SObjectField> fieldMap = getFieldMap(objApiName);
+		final String objApiName = getObjectApiName(objTemplate);
+		final List<String> fieldNameList = getFieldNameList(objApiName);
 
 		final Map<String, Object> fieldValues = new Map<String, Object>();
-		for (String fName : fieldMap.keySet()) {
+		for (String fName : fieldNameList) {
 			fName = fName.toLowerCase();
 			if (null != objTemplate.get(fName)) {
 				fieldValues.put(fName, objTemplate.get(fName));
@@ -320,9 +321,10 @@ public with sharing class Mock {
 			lookupMap = new Map<String, Id>();
 			relationshipsMap.put(sobjectId, lookupMap);
 		}
-		String objApiName = String.valueOf(sobj.getSObjectType());
-		final Map<String, Schema.SObjectField> fieldMap = getFieldMap(objApiName);
-		for (String fName : fieldMap.keySet()) {
+		final String objApiName = String.valueOf(sobj.getSObjectType());
+		final List<String> fieldNameList = getFieldNameList(objApiName);
+
+		for (String fName : fieldNameList) {
 			fName = fName.toLowerCase();
 			Object val = sobj.get(fName);
 			if (null != val && 'id' != fName) {
@@ -404,6 +406,15 @@ public with sharing class Mock {
 		Schema.SObjectType targetType = GLOBAL_DESCRIBE.get(typeName);
 		System.assertNotEquals(null, targetType, 'Failed to get Describe for type: ' + typeName);
 		return targetType.getDescribe().fields.getMap();
+	}
+
+	private static List<String> getFieldNameList(String typeName) {
+		final List<String> fieldNames = fieldNamesByObjectType.get(typeName);
+		if (null == fieldNames) {
+			fieldNames = new List<String>(getFieldMap(typeName).keySet());
+			fieldNamesByObjectType.put(typeName, fieldNames);
+		}
+		return fieldNames; 
 	}
 
 	/**
