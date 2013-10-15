@@ -103,8 +103,11 @@ public with sharing class MockUtils {
 	 * check how getProfile method works
 	 */
 	static testMethod void testGetProfile () {
+		//assuming there is always at least 1 profile (e.g. Sys Admin and Standard User) in the org
+		Profile p = [select Id, Name from Profile limit 1];
 		//every org has System Administrator profile so we can reliably test that it exists
-		System.assertNotEquals(null, MockUtils.getProfile('System Administrator'), 'System Administrator profile always exists');
+		System.assertNotEquals(null, MockUtils.getProfile(p.Name), 'Expected a Profile to be returned');
+		System.assertEquals(p.Id, MockUtils.getProfile(p.Name).Id, 'Wrong profile returned');
 	}
 	
 	/**
@@ -122,7 +125,6 @@ public with sharing class MockUtils {
 			rtLoadedId = rtLoaded.Id;
 			rtExpectedId = rtLoaded.Id;
 		}
-		//every org has System Administrator profile so we can reliably test that it exists
 		System.assertEquals(rtExpectedId, rtLoadedId, 'did not find RecordType which was expected');
 	}
 
@@ -132,7 +134,6 @@ public with sharing class MockUtils {
 	static testMethod void testGetRole () {
 		try {
 			UserRole existingRole = [select Id, DeveloperName from UserRole limit 1];
-			//every org has System Administrator profile so we can reliably test that it exists
 			System.assertEquals(existingRole.Id, MockUtils.getRole(existingRole.DeveloperName).Id, 
 					'Expected to return Id of existing role' + existingRole.DeveloperName);
 			//call same method again, but now expect to return value from cache
