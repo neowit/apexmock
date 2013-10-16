@@ -32,6 +32,11 @@ public with sharing class MockData extends MockDataStandard {
 		//DEFAULT_VALUES_BY_TYPE.put('Order_Line_Item__c', ORDER_LINE_VALUES);
 		//DEFAULT_VALUES_BY_TYPE.put('Account', ACCOUNT_VALUES);
 
+		//when you have more than 1 config for a specific Object type, use 'ObjectType#Subtype' notation
+		//See MockTests class for details
+		//DEFAULT_VALUES_BY_TYPE.put('Account#Customer', ACCOUNT_CUSTOMER_VALUES);
+		//DEFAULT_VALUES_BY_TYPE.put('Account#Partner', ACCOUNT_PARTNER_VALUES);
+
 	}
 
 	public override Map<String, Object> getValueMap(final String objApiName, final Map<String, Object> fieldValues) {
