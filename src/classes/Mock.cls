@@ -350,9 +350,11 @@ public with sharing class Mock {
 		//check if given objApiName is supported
 		System.assert(null != MOCK_DATA, 'Mock.MOCK_DATA is not initialised. Assign your data fixture to Mock.MOCK_DATA first.');
 		final Map<String, Object> fieldValuesInternal = toLowerCaseMap(fieldValues);
-		Map<String, Object> defaultValues = toLowerCaseMap(MOCK_DATA.getDefaultValues(objApiName, fieldValuesInternal));
-		System.assert(null != defaultValues,'Mock Data for type ' + objApiName + ' is not defined. Define data first.');
 		String realObjApiName = extractTypeName(objApiName);
+		Map<String, Object> defaultValues = toLowerCaseMap(MOCK_DATA.getDefaultValues(realObjApiName, fieldValuesInternal));
+		//add values defined for TypeName#...
+		defaultValues.putAll(toLowerCaseMap(MOCK_DATA.getDefaultValues(objApiName, fieldValuesInternal)));
+		System.assert(null != defaultValues,'Mock Data for type ' + objApiName + ' is not defined. Define data first.');
 
 		
 
