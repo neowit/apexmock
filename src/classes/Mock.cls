@@ -50,6 +50,10 @@ public with sharing class Mock {
 	private static Map<String, List<String>> fieldNamesByObjectType = new Map<String, List<String>>();
 
 	static {
+		if (isPersonAccountEnabled()) {
+			// Name is not a valid field for Person Accounts
+			MockDataStandard.ACCOUNT_VALUES.remove('Name');
+		}
 		//if there is MockData then instantiate it
 		Type t = Type.forName('MockData');
 		if (null != t) {
@@ -301,6 +305,13 @@ public with sharing class Mock {
 	public static Id getRelationship(final SObject sobj, final String path) {
 		System.assertNotEquals(null, MOCK_DATA, 'Mock.MOCK_DATA is not initialised');
 		return MOCK_DATA.getRelationship(sobj, path);
+	}
+
+	/**
+	 * @return: true if Person Account feature is enabled in the Org
+	 */
+	public static Boolean isPersonAccountEnabled() {
+		return getFieldMap('Account').containsKey('IsPersonAccount');
 	}
 	//////////////////////////////////////////////////////////////////////////////////////////////////
 	/**
