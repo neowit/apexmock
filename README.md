@@ -16,25 +16,25 @@ Now you can create some objects
 	//create Account and Insert into DB
 	//only relevant fields need to be specified, the rest will be taken from MyOrgMockDataSet1
 	Account acc1 = (Account)Mock.one('Account', 
-					new Map<String, Object>{ 'MyField__c' => 'some-value', 'OtherField__c' => 123}, true); 
+					new Map&lt;String, Object>{ 'MyField__c' => 'some-value', 'OtherField__c' => 123}, true); 
 	//create account but do not Insert yet
-	Account acc2 = (Account)Mock.one('Account', new Map<String, Object>{ 'Name' => 'Acc 2'}, false);
+	Account acc2 = (Account)Mock.one('Account', new Map&lt;String, Object>{ 'Name' => 'Acc 2'}, false);
 	acc2.MyId__c = '123456';
 	Database.insert(acc2);
 	...
 	//generate and save 2 Opportunities using acc1 and acc2 as their Accounts
-	List<Opportunity> opps = Mock.many('Opportunity', 
-								new Map<String, Object>{ 'Name' => 'Opp#{COUNTER}', 
+	List&lt;Opportunity> opps = Mock.many('Opportunity', 
+								new Map&lt;String, Object>{ 'Name' => 'Opp#{COUNTER}', 
 								'AccountId' => Id[] {acc1.Id, acc2.Id}}, 2, true); 
 	...
 	...
 
 	//same as above, but less code, all fields except Accoun.Name are taken from fixtures 
-	List&lt;Account> accs = Mock.many('Account', new Map<String, Object>{ 'Name' => 'Acc #{COUNTER}'}, 2, true)
+	List&lt;Account> accs = Mock.many('Account', new Map&lt;String, Object>{ 'Name' => 'Acc #{COUNTER}'}, 2, true)
 
 	//using Mock.toIds() so each opportunity will receive its own account Id
 	List&lt;Opportunity> opps2 = Mock.many('Opportunity', 
-								new Map<String, Object>{ 'Name' => 'Opp#{COUNTER}', 
+								new Map&lt;String, Object>{ 'Name' => 'Opp#{COUNTER}', 
 								'AccountId' => Mock.toIds(accs)}, 2, true); 
 	...
 	...
@@ -44,7 +44,7 @@ Now you can create some objects
 	//using Mock.DEPENDS_ON
 	Map&lt;String, String&gt; dependsOn = new Map&lt;String, String&gt;{'AccountId' => 'Account', 'My_Related_Object_Ref__c' => 'My_Related_Object__c'};
 	List&lt;Opportunity> opps2 = Mock.many('Opportunity', 
-								new Map<String, Object>{ 'Name' => 'Opp#{COUNTER}', Mock.DEPENDS_ON => dependsOn}, 2, true); 
+								new Map&lt;String, Object>{ 'Name' => 'Opp#{COUNTER}', Mock.DEPENDS_ON => dependsOn}, 2, true); 
 								
 	//ideally above Mock.DEPENDS_ON should be part of custom data fixture, e.g. in MockData class, but if we need to overwrite Mock.DEPENDS_ON value locally then we can.
 </pre>
