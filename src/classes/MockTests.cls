@@ -306,4 +306,9 @@ public with sharing class MockTests {
 
 	}
 	
+	/**
+	static testMethod void testGeolocationIssue () {
+		List<Account> accs = Mock.many('Account', new Map<String, Object>{'Geographical_Location__Latitude__s' => 10.123}, 10, true); 
+	}
+	*/
 }

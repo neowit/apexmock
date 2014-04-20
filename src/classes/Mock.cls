@@ -167,8 +167,9 @@ public with sharing class Mock {
 		final Map<String, Object> fieldValues = new Map<String, Object>();
 		for (String fName : fieldNameList) {
 			fName = fName.toLowerCase();
-			if (null != objTemplate.get(fName)) {
-				fieldValues.put(fName, objTemplate.get(fName));
+			Object fVal = getSimpleValue(objTemplate, fName);
+			if (null != fVal) {
+				fieldValues.put(fName, fVal);
 			}
 		}
 		
@@ -214,7 +215,7 @@ public with sharing class Mock {
 		String realObjApiName = extractTypeName(objApiName);
 		final Map<String, Object> defaultValues = MOCK_DATA.getDefaultValues(objApiName,  new Map<String, Object>());
 		for (String fName : defaultValues.keySet()) {
-			if (DEPENDS_ON != fName && null == obj.get(fName)) {
+			if (DEPENDS_ON != fName && null == getSimpleValue(obj, fName)) {
 				obj.put(fName, mergeValue(realObjApiName, fName, defaultValues.get(fName)));
 			}
 		}
@@ -313,7 +314,26 @@ public with sharing class Mock {
 	public static Boolean isPersonAccountEnabled() {
 		return getFieldMap('Account').containsKey('IsPersonAccount');
 	}
+
 	//////////////////////////////////////////////////////////////////////////////////////////////////
+	/**
+	 * Compound fields can't be used in Apex, because there is no Apex data type for compound fields.
+	 * With introduction of compound field types like BillingAddress and Location the code like:
+	 * ... Object val = sobject.get(fName) 
+	 * no longer works if encounters 'BillingAddress' or 'Geolocation' and throws: 
+	 *	System.TypeException: Data type not supported
+	 * hence having to use a workaround to return value of unknown type and not fail on compount data type
+	 */
+	private static Object getSimpleValue(final SObject sobj, String fName) {
+		fName = fName.toLowerCase();
+		Object val = null;
+		try {
+			val = sobj.get(fName);
+		} catch (Exception eIgnore) {}
+		return val;
+
+	}
+
 	/**
 	 * for each field that looks like Id lookup record value in relationshipsMap
 	 */
@@ -337,7 +357,7 @@ public with sharing class Mock {
 
 		for (String fName : fieldNameList) {
 			fName = fName.toLowerCase();
-			Object val = sobj.get(fName);
+			Object val = getSimpleValue(sobj, fName);
 			if (null != val && 'id' != fName) {
 				if (val instanceof Id) {
 					try {//NOTE this test witn API < 27.0 returns false positives for strings, so have to use try/catch just in case
@@ -466,7 +486,7 @@ public with sharing class Mock {
 			final List<SObject> objsToInsert = new List<SObject>();
 			
 			for (String fName : dependsOn.keySet()) {
-				if (null == obj.get(fName) && !recordByFieldName.containsKey(fName)) {//no need to create a parent record for the same field twice
+				if (null == getSimpleValue(obj, fName) && !recordByFieldName.containsKey(fName)) {//no need to create a parent record for the same field twice
 					String objType = (String)dependsOn.get(fName);
 					SObject relatedObj;
 					
