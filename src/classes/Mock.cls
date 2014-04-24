@@ -407,7 +407,7 @@ public with sharing class Mock {
 		}
 
 		//initialise dependencies based on user provided values
-		final Map<String, Object> dependsOn = (Map<String, Object>)fieldValuesInternal.get(DEPENDS_ON);
+		Map<String, Object> dependsOn = (Map<String, Object>)fieldValuesInternal.get(DEPENDS_ON);
 		Map<String, SObject> recordByFieldName = initDependencies(obj, dependsOn, new Map<String, SObject>());
 		assignDependencies(obj, dependsOn, recordByFieldName);
 
