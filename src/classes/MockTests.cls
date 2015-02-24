@@ -93,6 +93,15 @@ public with sharing class MockTests {
 		System.assertEquals(objs[1].get('Name'), 'many-name2', 'Local field override did not work as expected');
 		System.assertEquals(objs[1].get('BillingStreet'), ACCOUNT_VALUES.get('BillingStreet'), 'Field value from custom dataset has not been assigned');
 
+        //test COUNTER_I
+		Mock.UNIQUE_COUNTER = 0;
+		objs = Mock.many('Account', new Map<String, Object>{'Name' => 'many-name', 'NumberOfEmployees' => '#{COUNTER_I}'}, 3, false); 
+		System.assertEquals(3, objs.size(),'Number of created records does not match expected.');
+		
+		//check that second object in the list contains expected values
+		//COUNTER_I for second record will be 2
+		System.assertEquals(2, objs[1].get('NumberOfEmployees'), 'Local field override did not work as expected');
+
 		//test array values
 		objs = Mock.many('Account', new Map<String, Object>{'Name' => new String[]{'name-A', 'name-B', 'C-Name'}}, 3, false); 
 		System.assertEquals(3, objs.size(),'Number of created records does not match expected.');
