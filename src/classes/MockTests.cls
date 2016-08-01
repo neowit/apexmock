@@ -315,6 +315,42 @@ public with sharing class MockTests {
 
 	}
 	
+
+    /**
+     * check if parsing in Mock.containsFunction() and Mock.getFunctionParts() works correctly
+     */
+    static testMethod void testFunctionDetection () {
+        System.assertEquals(true, Mock.containsFunction('#{COUNTER}', 'COUNTER'));
+        System.assertEquals(true, Mock.containsFunction('#{COUNTER}x', 'COUNTER'));
+        System.assertEquals(true, Mock.containsFunction('some #{COUNTER}', 'COUNTER'));
+        System.assertEquals(true, Mock.containsFunction('some #{COUNTER} text', 'COUNTER'));
+        System.assertEquals(true, Mock.containsFunction('some #{COUNTER } text', 'COUNTER'));
+        System.assertEquals(true, Mock.containsFunction('some #{COUNTER,1 , 2   ,3 } text', 'COUNTER'));
+
+        String[] parts = Mock.getFunctionParts('some #{COUNTER} text', 'COUNTER');
+        System.assertEquals(1, parts.size());
+        System.assertEquals('COUNTER', parts[0]);
+        
+        parts = Mock.getFunctionParts('some #{COUNTER,1 , ABC   ,3 } text', 'COUNTER');
+        System.assertEquals(4, parts.size());
+        System.assertEquals('COUNTER', parts[0]);
+        System.assertEquals('1', parts[1]);
+        System.assertEquals('ABC', parts[2]);
+        System.assertEquals('3', parts[3]);
+        
+    }
+
+    /**
+     * check how #{COUNTER} & '#{COUNTER, NN}' work
+     */
+    static testMethod void testCounterFormatting () {
+        
+        System.assertEquals('1', Mock.formatCounterValue(new String[] {'COUNTER'}, 1) );
+        System.assertEquals('1', Mock.formatCounterValue(new String[] {'COUNTER', '1'}, 1) );
+        System.assertEquals('01', Mock.formatCounterValue(new String[] {'COUNTER', '2'}, 1) );
+        System.assertEquals('00001', Mock.formatCounterValue(new String[] {'COUNTER', '5'}, 1) );
+    }
+
 	/**
 	static testMethod void testGeolocationIssue () {
 		List<Account> accs = Mock.many('Account', new Map<String, Object>{'Geographical_Location__Latitude__s' => 10.123}, 10, true); 

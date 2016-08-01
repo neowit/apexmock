@@ -46,6 +46,11 @@ public with sharing class Mock {
 													//see MockTests.cls for examples
 	public static String DEPENDS_ON = 'depends_on';
 
+    public static String FUNCTION_PREFIX = '#{';
+    public static String FUNCTION_PREFIX_REGEX_ESCAPED = '#\\{';
+    public static String FUNCTION_SUFFIX = '}';
+    public static String FUNCTION_SUFFIX_REGEX_ESCAPED = '\\}';
+
 	private static Map<String, Schema.SObjectType> GLOBAL_DESCRIBE = Schema.getGlobalDescribe();
 	private static Map<String, List<String>> fieldNamesByObjectType = new Map<String, List<String>>();
 
@@ -242,7 +247,8 @@ public with sharing class Mock {
 				}
 				if (containsFunction(strVal, 'COUNTER')) {
 					UNIQUE_COUNTER++;
-					strVal = (String)setFunctionValue(strVal, 'COUNTER', '' + UNIQUE_COUNTER);
+                    String[] parts = getFunctionParts(strVal, 'COUNTER');
+					strVal = (String)setFunctionValue(strVal, 'COUNTER', formatCounterValue(parts, UNIQUE_COUNTER));
 				}
 				if ('RecordTypeId' == fName && null != realObjectApiName) {
 					//see if given value is of type Id
@@ -454,16 +460,65 @@ public with sharing class Mock {
 	 * @param: val - string to check for function name
 	 * this method assumes that val is NOT null
 	 */
+    @TestVisible
 	private static Boolean containsFunction(final String val, final String functionName) {
-		return val.contains('#{'+functionName+'}');
+        final String functionBody = getFunctionBody(val, functionName);
+        return null != functionBody && functionBody.length() > 0;
 	}
+
+    /**
+     * extracts specified function and its attributes
+     * e.g. 'Some #{COUNTER}' results in: 'COUNTER'
+     * e.g. 'Some #{COUNTER, 1, 2}' results in: 'COUNTER, 1, 2'
+     */
+    private static String getFunctionBody(final String val, final String functionName) {
+        final String prefix = FUNCTION_PREFIX + functionName;
+        final Integer functionStart = val.indexOf(prefix);
+        if (functionStart >=0) {
+            final Integer functionEnd = val.indexOf(FUNCTION_SUFFIX, functionStart + prefix.length());
+            if (functionEnd > 0) {
+                final String functionBody = val.substring(functionStart + 2, functionEnd);
+                return functionBody;
+            }
+        }
+        return '';
+    }
+
+    @TestVisible
+    private static String[] getFunctionParts(final String val, final String functionName) {
+        final String functionBody = getFunctionBody(val, functionName);
+        if (null != functionBody && functionBody.length() > 0) { 
+            return functionBody.replaceAll(' ', '').split(',');
+        }
+        return new String[]{};
+    }
 
 	/**
 	 * replace predefined merge function with its value
 	 */
 	private static Object setFunctionValue(final String val, final String functionName, final String value) {
-		return val.replaceAll('#\\{'+functionName+'\\}', value);
+        final String functionBody = getFunctionBody(val, functionName);
+        return val.replaceAll(FUNCTION_PREFIX_REGEX_ESCAPED + functionBody + FUNCTION_SUFFIX_REGEX_ESCAPED, value);
 	}
+
+    /**
+     * for '#{COUNTER}' and currentCounter = 1 returns: '1' 
+     * for '#{COUNTER, 5}' and currentCounter = 1 returns: '00001'
+     */
+    @TestVisible
+    private static String formatCounterValue(final String[] parts, final Integer currentCounter) {
+        if (parts.size() > 1) {
+            try {
+                Integer numberOfDigits = Integer.valueOf(parts[1]);
+                String str = '' + currentCounter;
+                return str.leftPad(numberOfDigits).replaceAll(' ', '0');
+
+            } catch (Exception e){
+                System.assert(false, 'Invalid first parameter in COUNTER function. Expected nothing or integer. Received: ' + String.join(parts, ','));
+            }
+        }
+        return '' + currentCounter;
+    }
 	
 	//Singleton objects, defined by MOCK_DATA.isSingletonObjectType() recorded here
 	//Object-Type => SObject
