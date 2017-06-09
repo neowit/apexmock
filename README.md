@@ -3,8 +3,17 @@ apexmock
 
 force.com Mock data and fixtures for Apex Unit Tests
 
-ApexMock is a library which can assist in dummy data generation for Apex Unit Tests
-     
+ApexMock is a library which can assist in dummy data generation for Apex Unit Tests  
+
+This library supports two kinds of testing approaches:  
+1. tests working with SFDC DB  
+- classes Mock, MockData, MockDataStandard, MockTests, MockUtils  
+2. tests not touching SFDC DB and working with Mock Database, see class MockDb  
+- MockDb is "in-memory" database which can be used to replace calls to SFDC DB in unit tests  
+
+Description below covers `Approach 1`.  
+`Approach 2` is for more advanced developers and they are expected to figure it out by themselves.  
+
   in order to use Mock methods Mock.MOCK_DATA has to be initialised first  
 <pre>
 	Mock.MOCK_DATA = new MyOrgMockDataSet1();
