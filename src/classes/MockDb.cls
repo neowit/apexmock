@@ -37,6 +37,7 @@ public class MockDb {
         }
         return results;
     }
+    
     public Boolean updateOne(final SObject obj) {
         final Map<Id, SObject> objById = recordsByType.get(obj.getSObjectType());
         final Id objId = (Id)obj.get('Id');
@@ -112,7 +113,6 @@ public class MockDb {
      *  query( Schema.SobjectType.Account.getSObjectType(), new Map<String, Object> {'Name' => 'Test Account', 'AnnualRevenue' => 123.45})
      */
     public QueryResult query(final Schema.SobjectType sobjectType, final Map<String, Object> keyValue) {
-        System.debug('agX query ' +sobjectType+ '>> keyValue = ' + keyValue);
         final Map<Id,SObject> recordsById = recordsByType.get(sobjectType);
         if (null == recordsById) {
             return new QueryResult(this, new List<SObject>());
@@ -127,8 +127,6 @@ public class MockDb {
         for(String fName : keyValue.keySet()) {
             Object expected = keyValue.get(fName);
             Object actual = obj.get(fName);
-            System.debug('agX expected=' + expected);
-            System.debug('agX actual=' + actual);
             if (expected != actual) {
                 return false;
             }

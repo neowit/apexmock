@@ -25,13 +25,13 @@ public class MockDbTest  {
         // INSERT
         db.insertOne(new Account(Id = '001000000000001', Name = 'Acc 1'));
         db.insertOne(new Account(Id = '001000000000002', Name = 'Acc 2'));
-        final List<Sobject> recs = db.query(Schema.SObjectType.Account.getSObjectType(), new Map<String, Object>{'Name' => 'Acc 1'});
+        final List<Sobject> recs = db.query(Schema.SObjectType.Account.getSObjectType(), new Map<String, Object>{'Name' => 'Acc 1'}).getCollection();
         System.assertEquals(1, recs.size(), 'Expected exactly 1 account with given name');
         System.assertEquals('Acc 1', recs[0].get('Name'), 'Expected exactly 1 account with given name');
 
-        System.assertEquals('Acc 2', db.query(Schema.SObjectType.Account.getSObjectType(), new Map<String, Object>{'Name' => 'Acc 2'})[0].get('Name'), 
+        System.assertEquals('Acc 2', db.query(Schema.SObjectType.Account.getSObjectType(), new Map<String, Object>{'Name' => 'Acc 2'}).getCollection()[0].get('Name'), 
                                     'Expected exactly 1 account with given name');
-        System.assertEquals(2, db.query(Schema.SObjectType.Account.getSObjectType(), 'Name', new List<Object>{'Acc 2', 'Acc 1'}).size(), 
+        System.assertEquals(2, db.query(Schema.SObjectType.Account.getSObjectType()).filter('Name', new List<Object>{'Acc 2', 'Acc 1'}).size(), 
                                     'Expected exactly 2 records');
 
         System.assertEquals(false, db.insertOne(new Account(Id = '001000000000001', Name = 'Acc 1')), 'Expected failed Insert, record with this Id already exists');
@@ -42,7 +42,7 @@ public class MockDbTest  {
         accs.add(new Account(Id = '001000000000005', Name = 'Acc 5'));
             
         db.insertMany(accs);
-        System.assertEquals(5, db.query(Schema.SObjectType.Account.getSObjectType(), 'Name', new List<Object>{'Acc 2', 'Acc 1', 'Acc 3', 'Acc 3', 'Acc 5'}).size());
+        System.assertEquals(5, db.query(Schema.SObjectType.Account.getSObjectType()).filter('Name', new List<Object>{'Acc 2', 'Acc 1', 'Acc 3', 'Acc 3', 'Acc 5'}).size());
 
         // UPDATE
         System.assertEquals(true, db.updateOne(new Account(Id = '001000000000001', Name = 'Acc 1.1')), 'Expected successful Update');
@@ -54,7 +54,7 @@ public class MockDbTest  {
         System.assertEquals(new List<Boolean>{true, true, true}, db.updateMany(accsToUpdate), 'Expected successful Update');
 
         System.assertEquals(true, db.updateOne(new Account(Id = '001000000000001', Name = 'Acc 1.1')), 'Expected successful Update');
-        System.assertEquals(2, db.query(Schema.SObjectType.Account.getSObjectType(), 'Name', new List<Object>{'Acc 3.1', 'Acc 4.1'}).size());
+        System.assertEquals(2, db.query(Schema.SObjectType.Account.getSObjectType()).filter('Name', new List<Object>{'Acc 3.1', 'Acc 4.1'}).size());
         
         // UPSERT
         final List<Account> accsToUpsert = new List<Account>();
@@ -62,8 +62,10 @@ public class MockDbTest  {
         accsToUpsert.add(new Account(Id = '001000000000005', Name = 'Acc 5.1'));
         accsToUpsert.add(new Account(Id = '001000000000006', Name = 'Acc 6'));
         System.assertEquals(new List<Boolean>{true, true, true}, db.upsertMany(accsToUpsert), 'Expected successful UPSERT');
-        System.assertEquals(3, db.query(Schema.SObjectType.Account.getSObjectType(), 'Name', new List<Object>{'Acc 4.1', 'Acc 5.1', 'Acc 6'}).size());
+        System.assertEquals(3, db.query(Schema.SObjectType.Account.getSObjectType()).filter('Name', new List<Object>{'Acc 4.1', 'Acc 5.1', 'Acc 6'}).size());
 
+        // DUMP
+        System.assertNotEquals(true, db.query(Schema.SObjectType.Account.getSObjectType()).isEmpty(), 'Account must contain some records');
     }
 
 
@@ -94,7 +96,7 @@ public class MockDbTest  {
         final MockDb db = new MockDb();
         
         // accounts collection does not exist yet
-        System.assertEquals(0, db.query(Schema.SObjectType.Account.getSObjectType(), 'Name', new List<Object>{'Acc 1'}).size());
+        System.assertEquals(0, db.query(Schema.SObjectType.Account.getSObjectType()).filter('Name', new List<Object>{'Acc 1'}).size());
         System.assertEquals(0, db.query(Schema.SObjectType.Account.getSObjectType(), new Map<String, Object>{'Name' => 'Acc 1'}).size());
     }
 
@@ -118,6 +120,58 @@ public class MockDbTest  {
         System.assertEquals('Acc 5', values[2]);
         final Account changedAcc = (Account)MockDb.setValues(new Account(Id = '001000000000003', Name = 'Acc 3'), new Map<String, Object>{'Name' => 'Acc 1'} );
         System.assertEquals('Acc 1', changedAcc.Name);
+    }
 
+    static testMethod void testDateTimeFilters () {
+
+        final DateTime NOW = DateTime.now();
+        final String TASK_KEY_PREFIX = Schema.SObjectType.Task.getKeyPrefix();
+        
+        final List<Task> accs = new List<Task>();
+        accs.add(new Task(Id = TASK_KEY_PREFIX + '000000000001', Subject = 'Tsk -1', ReminderDateTime = NOW - 1));
+        accs.add(new Task(Id = TASK_KEY_PREFIX + '000000000002', Subject = 'Tsk 0', ReminderDateTime = NOW));
+        accs.add(new Task(Id = TASK_KEY_PREFIX + '000000000003', Subject = 'Tsk +1', ReminderDateTime = NOW + 1));
+
+        final MockDb db = new MockDb();
+        db.insertMany(accs);
+        final Schema.SObjectType taskType = Schema.SObjectType.Task.getSObjectType();
+        System.assertEquals(2, db.query(taskType).greaterOrEqual('ReminderDateTime', NOW).size()); 
+        System.assertEquals(1, db.query(taskType).greaterThan('ReminderDateTime', NOW).size()); 
+        System.assertEquals(1, db.query(taskType).lessThan('ReminderDateTime', NOW).size()); 
+        System.assertEquals(2, db.query(taskType).lessOrEqual('ReminderDateTime', NOW).size()); 
+    }
+
+    static testMethod void testDateFilters () {
+        
+        final Date TODAY = Date.today();
+        final List<Contact> accs = new List<Contact>();
+        accs.add(new Contact(Id = '003000000000001', LastName = 'Acc -1', Birthdate = TODAY - 1));
+        accs.add(new Contact(Id = '003000000000002', LastName = 'Acc 0', Birthdate = TODAY));
+        accs.add(new Contact(Id = '003000000000003', LastName = 'Acc +1', Birthdate = TODAY + 1));
+        
+        final MockDb db = new MockDb();
+        db.insertMany(accs);
+        final Schema.SObjectType contactType = Schema.SObjectType.Contact.getSObjectType();
+        System.assertEquals(2, db.query(contactType).greaterOrEqual('Birthdate', TODAY).size()); 
+        System.assertEquals(1, db.query(contactType).greaterThan('Birthdate', TODAY).size()); 
+        System.assertEquals(1, db.query(contactType).lessThan('Birthdate', TODAY).size()); 
+        System.assertEquals(2, db.query(contactType).lessOrEqual('Birthdate', TODAY).size()); 
+    }
+
+    static testMethod void testDecimalFilters () {
+        
+        final Decimal HUNDRED = 100.00;
+        final List<Account> accs = new List<Account>();
+        accs.add(new Account(Id = '001000000000001', Name = 'Acc -1', AnnualRevenue = HUNDRED - 1));
+        accs.add(new Account(Id = '001000000000002', Name = 'Acc 0', AnnualRevenue = HUNDRED));
+        accs.add(new Account(Id = '001000000000003', Name = 'Acc +1', AnnualRevenue = HUNDRED + 1));
+        
+        final MockDb db = new MockDb();
+        db.insertMany(accs);
+        final Schema.SObjectType accountType = Schema.SObjectType.Account.getSObjectType();
+        System.assertEquals(2, db.query(accountType).greaterOrEqual('AnnualRevenue', HUNDRED).size()); 
+        System.assertEquals(1, db.query(accountType).greaterThan('AnnualRevenue', HUNDRED).size()); 
+        System.assertEquals(1, db.query(accountType).lessThan('AnnualRevenue', HUNDRED).size()); 
+        System.assertEquals(2, db.query(accountType).lessOrEqual('AnnualRevenue', HUNDRED).size()); 
     }
 }
