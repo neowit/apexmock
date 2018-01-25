@@ -64,6 +64,9 @@ public class MockDbTest  {
         System.assertEquals(new List<Boolean>{true, true, true}, db.upsertMany(accsToUpsert), 'Expected successful UPSERT');
         System.assertEquals(3, db.query(Schema.SObjectType.Account.getSObjectType()).filter('Name', new List<Object>{'Acc 4.1', 'Acc 5.1', 'Acc 6'}).size());
 
+        db.deleteMany(new Set<Id>{'001000000000004', '001000000000005'});
+        System.assertEquals(1, db.query('Account').filter('Name', new List<Object>{'Acc 4.1', 'Acc 5.1', 'Acc 6'}).size(), 'Expected only Acc 6 to pe present, because 4.1 and 5.1 should have been deleted');
+
         // DUMP
         System.assertNotEquals(true, db.query(Schema.SObjectType.Account.getSObjectType()).isEmpty(), 'Account must contain some records');
     }

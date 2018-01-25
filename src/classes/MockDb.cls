@@ -106,6 +106,14 @@ public class MockDb {
 
         return true;
     }
+    
+    // this method is not efficient because cycles through all stored object types
+    // but for use in unit tests *only* it should be OK
+    public void deleteMany(final Set<Id> ids) {
+        for(Map<Id, SObject> objectById : recordsByType.values()) {
+            objectById.keySet().removeAll(ids);
+        }
+    }
 
     /**
      * query all previously added records of specific SObject Type
