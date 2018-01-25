@@ -29,7 +29,7 @@ public class MockDbTest  {
         System.assertEquals(1, recs.size(), 'Expected exactly 1 account with given name');
         System.assertEquals('Acc 1', recs[0].get('Name'), 'Expected exactly 1 account with given name');
 
-        System.assertEquals('Acc 2', db.query(Schema.SObjectType.Account.getSObjectType(), new Map<String, Object>{'Name' => 'Acc 2'}).getCollection()[0].get('Name'), 
+        System.assertEquals('Acc 2', db.query('Account', new Map<String, Object>{'Name' => 'Acc 2'}).getCollection()[0].get('Name'), 
                                     'Expected exactly 1 account with given name');
         System.assertEquals(2, db.query(Schema.SObjectType.Account.getSObjectType()).filter('Name', new List<Object>{'Acc 2', 'Acc 1'}).size(), 
                                     'Expected exactly 2 records');
@@ -42,7 +42,7 @@ public class MockDbTest  {
         accs.add(new Account(Id = '001000000000005', Name = 'Acc 5'));
             
         db.insertMany(accs);
-        System.assertEquals(5, db.query(Schema.SObjectType.Account.getSObjectType()).filter('Name', new List<Object>{'Acc 2', 'Acc 1', 'Acc 3', 'Acc 3', 'Acc 5'}).size());
+        System.assertEquals(5, db.query('acCOunt').filter('Name', new List<Object>{'Acc 2', 'Acc 1', 'Acc 3', 'Acc 3', 'Acc 5'}).size());
 
         // UPDATE
         System.assertEquals(true, db.updateOne(new Account(Id = '001000000000001', Name = 'Acc 1.1')), 'Expected successful Update');

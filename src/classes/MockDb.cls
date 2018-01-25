@@ -20,6 +20,13 @@
  *
  */
 public class MockDb {
+    final static Map<String, Schema.SObjectType> OBJ_TYPE_BY_NAME = new  Map<String, Schema.SObjectType>();
+    static {
+        Map<String, Schema.SObjectType> typeByName = Schema.getGlobalDescribe();
+        for(String typeName : typeByName.keySet()) {
+            OBJ_TYPE_BY_NAME.put(typeName.toLowerCase(),  typeByName.get(typeName));
+        }
+    }
     final Map<Schema.SobjectType, Map<Id, SObject>> recordsByType = new Map<Schema.SobjectType, Map<Id, SObject>>();
 
     public List<Boolean> updateMany(final List<SObject> objs) {
@@ -103,8 +110,17 @@ public class MockDb {
     /**
      * query all previously added records of specific SObject Type
      */
+    public QueryResult query(final String sobjectType) {
+        return query(findSobjectType(sobjectType));
+    }
     public QueryResult query(final Schema.SobjectType sobjectType) {
         return query(sobjectType, new Map<String, Object>());
+    }
+    
+    private static  Schema.SobjectType findSobjectType(final String sobjectType) {
+        final Schema.SobjectType objType = OBJ_TYPE_BY_NAME.get(sobjectType.toLowerCase());
+        System.assertNotEquals(null, objType, 'SObjectType not found  by name: ' + sobjectType);
+        return objType;
     }
 
     /**
@@ -112,6 +128,9 @@ public class MockDb {
      * e.g. 
      *  query( Schema.SobjectType.Account.getSObjectType(), new Map<String, Object> {'Name' => 'Test Account', 'AnnualRevenue' => 123.45})
      */
+    public QueryResult query(final String sobjectType, final Map<String, Object> keyValue) {
+        return query(findSobjectType(sobjectType), keyValue);
+    }
     public QueryResult query(final Schema.SobjectType sobjectType, final Map<String, Object> keyValue) {
         final Map<Id,SObject> recordsById = recordsByType.get(sobjectType);
         if (null == recordsById) {
@@ -176,7 +195,7 @@ public class MockDb {
         }
 
         /**
-         * return only records where value of given field name has belongs ot list of filterValues
+         * return only records where value of given field name belongs ot list of filterValues
          * e.g. 
          *  filter( 'Name', new List<Object> {'Test Account 1', 'Test Account 2', 'Test Account XX'});
          */
