@@ -99,7 +99,7 @@ public class MockDbTest  {
         final MockDb db = new MockDb();
         
         // accounts collection does not exist yet
-        System.assertEquals(0, db.query(Schema.SObjectType.Account.getSObjectType()).filter('Name', new List<Object>{'Acc 1'}).size());
+        System.assertEquals(0, db.query(Schema.SObjectType.Account.getSObjectType()).filter('Name', 'Acc 1').size());
         System.assertEquals(0, db.query(Schema.SObjectType.Account.getSObjectType(), new Map<String, Object>{'Name' => 'Acc 1'}).size());
     }
 

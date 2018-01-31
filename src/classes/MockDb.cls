@@ -218,6 +218,15 @@ public class MockDb {
             }
             return new QueryResult(db, resultRecords);
         }
+
+        /**
+         * return only records where value of given field name equals filterValue
+         * e.g. 
+         *  filter( 'Name', 'Test Account 1');
+         */
+        public QueryResult filter(final String fName, final Object filterValue) {
+            return filter(fName, new List<Object>{filterValue});
+        }
         
         /**
          * apply field/value filter to QueryResult
