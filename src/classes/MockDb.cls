@@ -224,8 +224,9 @@ public class MockDb {
          */
         public QueryResult filter(final String fName, final List<Object> filterValues) {
             final List<SObject> resultRecords = new List<SObject>();
+            final Set<Object> uniqueValues = new Set<Object>(filterValues);
             for(SObject record : getCollection()) {
-                for(Object value : filterValues) {
+                for(Object value : uniqueValues) {
                     if (isMatch(record, new Map<String, Object>{fName => value})) {
                         resultRecords.add(record);
                     }
