@@ -71,16 +71,31 @@ public class MockDb {
     public Boolean insertOne(final SObject obj) {
         final Schema.SobjectType sobjectType = obj.getSObjectType();
         Map<Id, SObject> objById = recordsByType.get(sobjectType);
-        final Id objId = (Id)obj.get('Id');
+        Id objId = (Id)obj.get('Id');
+        if (null == objId) {
+            objId = getNewId(sobjectType);
+            obj.put('Id', objId);
+        }
+
         if (null == objById) {
             objById = new Map<Id, SObject>();
             recordsByType.put(sobjectType, objById);
         } else if (objById.containsKey(objId)) {
+            System.assert(false, 'Duplicate Id: '+objId+' for sobjectType=' + sobjectType + ' clashes with previously inserted value. Consider revising manually created test Ids for this object type');
             return false;
         }
         objById.put(objId, obj);
 
         return true;
+    }
+    
+    private Id getNewId(final Schema.SobjectType sobjectType) {
+        Map<Id, SObject> objById = recordsByType.get(sobjectType);
+        Integer nextIndex = (null == objById ? 0 : objById.size()) + 1000000; // test Ids start with 1 Million
+        final String keyPrefix = sobjectType.getDescribe().getKeyPrefix();
+        String indexStr = String.valueOf(nextIndex) ;
+        Integer padSize = 15 - keyPrefix.length();
+        return keyPrefix + indexStr.leftPad(padSize, '0');
     }
 
     public List<Boolean> upsertMany(final List<SObject> objs) {
