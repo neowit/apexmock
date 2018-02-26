@@ -23,8 +23,8 @@ public class MockDbTest  {
     static testMethod void testDbMethods () {
         final MockDb db = new MockDb();
         // INSERT
-        db.insertOne(new Account(Id = '001000000000001', Name = 'Acc 1'));
-        db.insertOne(new Account(Id = '001000000000002', Name = 'Acc 2'));
+        db.insertOne(new Account(Id = '001000000000001', Name = 'Acc 1', NumberOfEmployees = 1));
+        db.insertOne(new Account(Id = '001000000000002', Name = 'Acc 2', NumberOfEmployees = 2));
         final List<Sobject> recs = db.query(Schema.SObjectType.Account.getSObjectType(), new Map<String, Object>{'Name' => 'Acc 1'}).getCollection();
         System.assertEquals(1, recs.size(), 'Expected exactly 1 account with given name');
         System.assertEquals('Acc 1', recs[0].get('Name'), 'Expected exactly 1 account with given name');
@@ -34,7 +34,13 @@ public class MockDbTest  {
         System.assertEquals(2, db.query(Schema.SObjectType.Account.getSObjectType()).filter('Name', new List<Object>{'Acc 2', 'Acc 1'}).size(), 
                                     'Expected exactly 2 records');
 
-        System.assertEquals(false, db.insertOne(new Account(Id = '001000000000001', Name = 'Acc 1')), 'Expected failed Insert, record with this Id already exists');
+        System.debug('agX HERE');
+        System.assertEquals(true, db.insertOne(new Account(Name = 'Acc 1')), 'Expected successful Insert, random Id must be assigned automatically');
+        System.assertEquals(3, db.query('Account').size());
+        System.assertEquals(3, db.query('Account').getCollectionOf('Name').size());
+        System.assertEquals(3, db.query('Account').getSetOfIds('Id').size());
+        System.assertEquals(3, db.query('Account').getByMapOfIds('Id').size());
+        System.assertEquals(2, db.query('Account').getByMapOfStrings('Name').size(), 'At this point we have only 2 unique Account Names: Acc 1, Acc 2');
         
         final List<Account> accs = new List<Account>();
         accs.add(new Account(Id = '001000000000003', Name = 'Acc 3'));
@@ -42,7 +48,15 @@ public class MockDbTest  {
         accs.add(new Account(Id = '001000000000005', Name = 'Acc 5'));
             
         db.insertMany(accs);
+        // at this point we have 6 accounts, 2 of which have name 'Acc1'
+        System.assertEquals(2, db.query('Account').filter('Name', new List<Object>{'Acc 1'}).size());
         System.assertEquals(5, db.query('acCOunt').filter('Name', new List<Object>{'Acc 2', 'Acc 1', 'Acc 3', 'Acc 3', 'Acc 5'}).size());
+        System.assertEquals(6, db.query('AcCOunt').filter('Name', new Set<String>{'Acc 2', 'Acc 1', 'Acc 3', 'Acc 4', 'Acc 5'}).size());
+        System.assertEquals(2, db.query('AcCOunt').filter('Id', new Set<Id>{'001000000000001', '001000000000002'}).size());
+        System.assertEquals(1, db.query('AcCOunt').filter('Id', '001000000000001').size());
+        System.assertEquals(1, db.query('AcCOunt').filter('Id', Id.valueOf('001000000000001')).size());
+        System.assertEquals(1, db.query('AcCOunt').filter('NumberOfEmployees', 2).size());
+        System.assertEquals('Acc 2', db.query('AcCOunt').filter('NumberOfEmployees', 2).getCollection()[0].get('Name'));
 
         // UPDATE
         System.assertEquals(true, db.updateOne(new Account(Id = '001000000000001', Name = 'Acc 1.1')), 'Expected successful Update');

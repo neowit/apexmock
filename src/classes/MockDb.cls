@@ -207,9 +207,64 @@ public class MockDb {
             this.collection = records;
         }
         
+        /**
+         * currently held collection of SObject-s
+         * - similar to List returned by: [select ... from ObjectType]
+         */
         public List<SObject> getCollection() {
             return null == collection ? new List<SObject>(): collection;
         }
+
+        /**
+         * unlike getCollection() this methods returns a list of values of specific field from result collection
+         * ex: if we had a query: [select Id, Name from Account]
+         * then getCollectionOf('Name') will return List of account names
+         */
+        public List<Object> getCollectionOf(final String fName) {
+            final List<Object> resCollection = new List<Object>();
+            for (SObject rec: getCollection()) {
+                resCollection.add(rec.get(fName));
+            }
+            return resCollection;
+        }
+        /**
+         * dump a set of values of specific field from result collection
+         * ex: if we had a query: [select Id, Name from Account]
+         * then getSetOfIds('AccountId') will populate provided resultSet with a Set of account Ids
+         */
+        public Set<Id> getSetOfIds(final String fName) {
+            final Set<Id> resultSet = new Set<Id>();
+            for (SObject rec: getCollection()) {
+                resultSet.add((Id)rec.get(fName));
+            }
+            return resultSet;
+        }
+        
+        /**
+         * this is like groupBy(id-field-name)
+         * - when called as getMapOf('Id') the result is similar to 
+         *  Map returned by: new Map<Id, SObject>([select ... from ObjectType])
+         */
+        public Map<Id, SObject> getByMapOfIds(final String fName) {
+            final Map<Id, SObject> resultMap = new Map<Id, SObject>();
+            for (SObject rec: getCollection()) {
+                resultMap.put((Id)rec.get(fName), rec);
+            }
+            resultMap.remove(null);
+            return resultMap;
+        }
+        /**
+         * this is like groupBy(string-field-name)
+         */
+        public Map<String, SObject> getByMapOfStrings(final String fName) {
+            final Map<String, SObject> resultMap = new Map<String, SObject>();
+            for (SObject rec: getCollection()) {
+                resultMap.put((String)rec.get(fName), rec);
+            }
+            resultMap.remove(null);
+            return resultMap;
+        }
+        
         public Integer size() {
             return getCollection().size();
         }
@@ -222,6 +277,12 @@ public class MockDb {
          * e.g. 
          *  filter( 'Name', new List<Object> {'Test Account 1', 'Test Account 2', 'Test Account XX'});
          */
+        public QueryResult filter(final String fName, final Set<Id> filterValues) {
+            return filter(fName, new List<Id>(filterValues));
+        }
+        public QueryResult filter(final String fName, final Set<String> filterValues) {
+            return filter(fName, new List<String>(filterValues));
+        }
         public QueryResult filter(final String fName, final List<Object> filterValues) {
             final List<SObject> resultRecords = new List<SObject>();
             final Set<Object> uniqueValues = new Set<Object>(filterValues);
@@ -240,8 +301,14 @@ public class MockDb {
          * e.g. 
          *  filter( 'Name', 'Test Account 1');
          */
-        public QueryResult filter(final String fName, final Object filterValue) {
-            return filter(fName, new List<Object>{filterValue});
+        public QueryResult filter(final String fName, final String filterValue) {
+            return filter(fName, new List<String>{filterValue});
+        }
+        public QueryResult filter(final String fName, final Id filterValue) {
+            return filter(fName, new List<Id>{filterValue});
+        }
+        public QueryResult filter(final String fName, final Decimal filterValue) {
+            return filter(fName, new List<Decimal>{filterValue});
         }
         
         /**
