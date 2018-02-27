@@ -214,6 +214,15 @@ public class MockDb {
         public List<SObject> getCollection() {
             return null == collection ? new List<SObject>(): collection;
         }
+        /**
+         * if collection is not empty then return first element
+         */
+        public SObject head {
+            private set; 
+            get {
+                return null != collection && !collection.isEmpty() ? collection[0] : null;
+            }
+        }
 
         /**
          * unlike getCollection() this methods returns a list of values of specific field from result collection

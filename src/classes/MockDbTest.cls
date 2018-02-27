@@ -57,6 +57,7 @@ public class MockDbTest  {
         System.assertEquals(1, db.query('AcCOunt').filter('Id', Id.valueOf('001000000000001')).size());
         System.assertEquals(1, db.query('AcCOunt').filter('NumberOfEmployees', 2).size());
         System.assertEquals('Acc 2', db.query('AcCOunt').filter('NumberOfEmployees', 2).getCollection()[0].get('Name'));
+        System.assertEquals('Acc 2', db.query('AcCOunt').filter('NumberOfEmployees', 2).head.get('Name'));
 
         // UPDATE
         System.assertEquals(true, db.updateOne(new Account(Id = '001000000000001', Name = 'Acc 1.1')), 'Expected successful Update');
