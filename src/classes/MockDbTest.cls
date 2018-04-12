@@ -140,18 +140,32 @@ public class MockDbTest  {
         System.assertEquals('Acc 1', changedAcc.Name);
     }
 
+    static testMethod void testBooleanFilter () {
+        final Task tskOn = new Task(Subject = 'bool-on', IsRecurrence = true);
+        final Task tskOff = new Task(Subject = 'bool-of', IsRecurrence = false);
+        final List<Task> recs = new List<Task>{tskOn, tskOff};
+        
+        final MockDb db = new MockDb();
+        db.insertMany(recs);
+
+        System.assertEquals(2, db.query('Task').size()); 
+        System.assertEquals(1, db.query('Task').filter('IsRecurrence', true).size()); 
+        System.assertEquals(1, db.query('Task').filter('Subject', 'bool-on').filter('IsRecurrence', true).size()); 
+        System.assertEquals(1, db.query('Task').filter('IsRecurrence', false).size()); 
+    }
+    
     static testMethod void testDateTimeFilters () {
 
         final DateTime NOW = DateTime.now();
         final String TASK_KEY_PREFIX = Schema.SObjectType.Task.getKeyPrefix();
         
-        final List<Task> accs = new List<Task>();
-        accs.add(new Task(Id = TASK_KEY_PREFIX + '000000000001', Subject = 'Tsk -1', ReminderDateTime = NOW - 1));
-        accs.add(new Task(Id = TASK_KEY_PREFIX + '000000000002', Subject = 'Tsk 0', ReminderDateTime = NOW));
-        accs.add(new Task(Id = TASK_KEY_PREFIX + '000000000003', Subject = 'Tsk +1', ReminderDateTime = NOW + 1));
+        final List<Task> recs = new List<Task>();
+        recs.add(new Task(Subject = 'Tsk -1', ReminderDateTime = NOW - 1));
+        recs.add(new Task(Subject = 'Tsk 0', ReminderDateTime = NOW));
+        recs.add(new Task(Subject = 'Tsk +1', ReminderDateTime = NOW + 1));
 
         final MockDb db = new MockDb();
-        db.insertMany(accs);
+        db.insertMany(recs);
         final Schema.SObjectType taskType = Schema.SObjectType.Task.getSObjectType();
         System.assertEquals(2, db.query(taskType).greaterOrEqual('ReminderDateTime', NOW).size()); 
         System.assertEquals(1, db.query(taskType).greaterThan('ReminderDateTime', NOW).size()); 

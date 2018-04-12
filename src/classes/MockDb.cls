@@ -176,6 +176,9 @@ public class MockDb {
         return true;
     }
 
+    /**
+     * return value of specific field from each SObject from given collection
+     */
     public static List<Object> collectValues(final List<SObject> objs, final String fName) {
         final List<Object> values = new List<Object>();
         for(SObject obj : objs) {
@@ -187,6 +190,9 @@ public class MockDb {
         return values;
     }
     
+    /**
+     * set values of multiple fields on SObject in one go 
+     */
     public static SObject setValues(final SObject obj, final Map<String, Object> keyValue) {
         for(String fName : keyValue.keySet()) {
             Object value = keyValue.get(fName);
@@ -318,6 +324,9 @@ public class MockDb {
         }
         public QueryResult filter(final String fName, final Decimal filterValue) {
             return filter(fName, new List<Decimal>{filterValue});
+        }
+        public QueryResult filter(final String fName, final Boolean filterValue) {
+            return filter(fName, new List<Boolean>{filterValue});
         }
         
         /**
