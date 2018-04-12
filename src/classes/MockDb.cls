@@ -256,11 +256,10 @@ public class MockDb {
         }
         
         /**
-         * this is like groupBy(id-field-name)
-         * - when called as getMapOf('Id') the result is similar to 
-         *  Map returned by: new Map<Id, SObject>([select ... from ObjectType])
+         *  when called as getMapById('Id') the result is similar to: 
+         *      new Map<Id, SObject>([select ... from ObjectType])
          */
-        public Map<Id, SObject> getByMapOfIds(final String fName) {
+        public Map<Id, SObject> getMapById(final String fName) {
             final Map<Id, SObject> resultMap = new Map<Id, SObject>();
             for (SObject rec: getCollection()) {
                 resultMap.put((Id)rec.get(fName), rec);
@@ -269,9 +268,9 @@ public class MockDb {
             return resultMap;
         }
         /**
-         * this is like groupBy(string-field-name)
+         * similar to getMapOfIds, except the key is String field
          */
-        public Map<String, SObject> getByMapOfStrings(final String fName) {
+        public Map<String, SObject> getMapByString(final String fName) {
             final Map<String, SObject> resultMap = new Map<String, SObject>();
             for (SObject rec: getCollection()) {
                 resultMap.put((String)rec.get(fName), rec);

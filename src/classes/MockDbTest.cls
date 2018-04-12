@@ -39,8 +39,8 @@ public class MockDbTest  {
         System.assertEquals(3, db.query('Account').size());
         System.assertEquals(3, db.query('Account').getCollectionOf('Name').size());
         System.assertEquals(3, db.query('Account').getSetOfIds('Id').size());
-        System.assertEquals(3, db.query('Account').getByMapOfIds('Id').size());
-        System.assertEquals(2, db.query('Account').getByMapOfStrings('Name').size(), 'At this point we have only 2 unique Account Names: Acc 1, Acc 2');
+        System.assertEquals(3, db.query('Account').getMapById('Id').size());
+        System.assertEquals(2, db.query('Account').getMapByString('Name').size(), 'At this point we have only 2 unique Account Names: Acc 1, Acc 2');
         
         final List<Account> accs = new List<Account>();
         accs.add(new Account(Id = '001000000000003', Name = 'Acc 3'));
